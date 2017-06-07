@@ -31,26 +31,6 @@ public class Main {
   public static void main(String[] args) {
     GraknSession session = Grakn.session(Grakn.IN_MEMORY, "MyGraph");
 
-    createTwitterOntologies(session);
-
-    // ------------------------ insert -----------------------
-
-    // ------------------------ match ------------------------
-    GraknGraph graphReader = session.open(GraknTxType.READ);
-
-    QueryBuilder qb = graphReader.graql();
-
-    MatchQuery query = qb.match(var("x").isa("user")).limit(50);
-
-    for (Map<String, Concept> result : query) {
-      System.out.println(result.get("x").getId());
-    }
-
-    graphReader.close();
-    System.out.println("hello");
-  }
-
-  public static void createTwitterOntologies(GraknSession session) {
     // ------------------------ write ------------------------
     GraknGraph graphWriter = session.open(GraknTxType.WRITE);
 
@@ -77,6 +57,27 @@ public class Main {
     user.plays(writes);
     tweet.plays(written);
 
+    // ------------------------ insert -----------------------
+    Entity user1 = user.addEntity();
+    Resource user1Handle = handle.putResource("User 1");
+    user1.resource(user1Handle);
+
     graphWriter.commit();
+
+    // ------------------------ match ------------------------
+
+    GraknGraph graphReader = session.open(GraknTxType.READ);
+
+    QueryBuilder qb = graphReader.graql();
+
+    MatchQuery query = qb.match(var("x").isa("user")).limit(50);
+
+    for (Map<String, Concept> result : query) {
+      Entity resultUser = result.get("x").asEntity();
+
+      System.out.println(resultUser.getId());
+    }
+
+    graphReader.close();
   }
 }
