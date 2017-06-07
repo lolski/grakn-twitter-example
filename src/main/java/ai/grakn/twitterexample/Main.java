@@ -12,14 +12,13 @@ Goal: demonstrate streaming data into Grakn, introduce interesting Grakn concept
  */
 
 // TODO:
-// - look at other example on project format
 // - look at twitter streaming vs rest api
 
 import ai.grakn.Grakn;
 import ai.grakn.GraknGraph;
 import ai.grakn.GraknSession;
 import ai.grakn.GraknTxType;
-import ai.grakn.concept.Concept;
+import ai.grakn.concept.*;
 import ai.grakn.graql.MatchQuery;
 import ai.grakn.graql.QueryBuilder;
 
@@ -32,14 +31,16 @@ public class Main {
   public static void main(String[] args) {
     GraknSession session = Grakn.session(Grakn.IN_MEMORY, "MyGraph");
 
-    // write
+    createTwitterOntologies(session);
 
-    // select
+    // ------------------------ insert -----------------------
+
+    // ------------------------ match ------------------------
     GraknGraph graphReader = session.open(GraknTxType.READ);
 
     QueryBuilder qb = graphReader.graql();
 
-    MatchQuery query = qb.match(var("x").isa("person").has("firstname", "Bob")).limit(50);
+    MatchQuery query = qb.match(var("x").isa("user")).limit(50);
 
     for (Map<String, Concept> result : query) {
       System.out.println(result.get("x").getId());
@@ -47,5 +48,35 @@ public class Main {
 
     graphReader.close();
     System.out.println("hello");
+  }
+
+  public static void createTwitterOntologies(GraknSession session) {
+    // ------------------------ write ------------------------
+    GraknGraph graphWriter = session.open(GraknTxType.WRITE);
+
+    // resources
+    ResourceType id = graphWriter.putResourceType("identifier", ResourceType.DataType.STRING);
+    ResourceType text = graphWriter.putResourceType("text", ResourceType.DataType.STRING);
+    ResourceType handle = graphWriter.putResourceType("handle", ResourceType.DataType.STRING);
+
+    // entities
+    EntityType tweet = graphWriter.putEntityType("tweet");
+    EntityType user = graphWriter.putEntityType("user");
+
+    // roles
+    RoleType writes = graphWriter.putRoleType("writes");
+    RoleType written = graphWriter.putRoleType("written");
+
+    // relations
+    RelationType tweeted = graphWriter.putRelationType("tweeted").relates(writes).relates(written);
+
+    // resource and relation assignments
+    tweet.resource(id);
+    tweet.resource(text);
+    user.resource(handle);
+    user.plays(writes);
+    tweet.plays(written);
+
+    graphWriter.commit();
   }
 }
