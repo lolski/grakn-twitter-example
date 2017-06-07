@@ -15,6 +15,8 @@ Goal: demonstrate streaming data into Grakn, introduce interesting Grakn concept
 // - look at other example on project format
 // - look at twitter streaming vs rest api
 
+import ai.grakn.graql.QueryBuilder;
+
 public class Main {
   public static void main(String[] args) {
     System.out.println("hello");
