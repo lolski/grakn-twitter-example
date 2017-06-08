@@ -18,33 +18,33 @@ public class TweetStreamProcessor {
   }
 
   public void run() {
-    twitterStream.sample();
+    twitterStream.sample(DEFAULT_LANGUAGE);
   }
 
+  private final String DEFAULT_LANGUAGE = "en";
   private TwitterStreamFactory twitterStreamFactory;
   private TwitterStream twitterStream;
 }
 
 class TwitterHelper {
   public static Configuration createConfiguration(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret) {
-    ConfigurationBuilder cb = new ConfigurationBuilder();
-    Configuration configuration = cb.setDebugEnabled(true)
-        .setOAuthConsumerKey("s81rBRQWHvGE1llHPYry7zSOm")
-        .setOAuthConsumerSecret("weQ8oZhBDZq9PjADlZJ897MAlxkXlNsUEH04jsqYPaLX4QCTKB")
-        .setOAuthAccessToken("1425775171-bnAiy4iF6y2SH1WMXPQmuwDm40zLTkBLk62qjxS")
-        .setOAuthAccessTokenSecret("XZ1SYSBOOFIH2jP6IKT3Je10tGtGKxstdPhuy2X4dHCUC").build();
-
-    return configuration;
+    return new ConfigurationBuilder()
+        .setDebugEnabled(false)
+        .setOAuthConsumerKey(consumerKey)
+        .setOAuthConsumerSecret(consumerSecret)
+        .setOAuthAccessToken(accessToken)
+        .setOAuthAccessTokenSecret(accessTokenSecret)
+        .build();
   }
 }
 
 class TweetListener implements StatusListener {
   public TweetListener(Consumer2<String, String> onStatusReceived) {
-    this.onStatusHandler = onStatusReceived;
+    this.onStatusReceived = onStatusReceived;
   }
 
   public void onStatus(Status status) {
-    onStatusHandler.apply(status.getUser().getScreenName(), status.getText());
+    onStatusReceived.apply(status.getUser().getScreenName(), status.getText());
   }
 
   public void onDeletionNotice(StatusDeletionNotice statusDeletionNotice) {}
@@ -55,5 +55,5 @@ class TweetListener implements StatusListener {
   public void onScrubGeo(long lat, long long_) {}
   public void onStallWarning(StallWarning stallWarning) {}
 
-  private Consumer2<String, String> onStatusHandler;
+  private Consumer2<String, String> onStatusReceived;
 }
