@@ -21,9 +21,6 @@ import ai.grakn.GraknTxType;
 import ai.grakn.concept.*;
 import ai.grakn.graql.MatchQuery;
 import ai.grakn.graql.QueryBuilder;
-
-import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 import static ai.grakn.graql.Graql.*;
@@ -73,12 +70,11 @@ public class Main {
     QueryBuilder qb = graphReader.graql();
 
     MatchQuery query = qb.match(var("x").isa("user")).limit(50);
-
+    ResourceType handle_ = graphReader.getResourceType("handle");
     for (Map<String, Concept> result : query) {
       Entity resultUser = result.get("x").asEntity();
-      Collection<Resource<?>> resultUserResources = resultUser.resources();
-
-      resultUserResources.forEach(e -> { System.out.println(e.getValue()); });
+      Resource<?> resultUserResources = resultUser.resources(handle_).iterator().next();
+      System.out.println(resultUserResources.getValue());
     }
 
     graphReader.close();
