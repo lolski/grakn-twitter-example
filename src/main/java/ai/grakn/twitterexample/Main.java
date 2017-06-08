@@ -34,31 +34,31 @@ public class Main {
     GraknGraph graphWriter = session.open(GraknTxType.WRITE);
 
     // resources
-    ResourceType id = graphWriter.putResourceType("identifier", ResourceType.DataType.STRING);
-    ResourceType text = graphWriter.putResourceType("text", ResourceType.DataType.STRING);
-    ResourceType handle = graphWriter.putResourceType("handle", ResourceType.DataType.STRING);
+    ResourceType idType = graphWriter.putResourceType("identifier", ResourceType.DataType.STRING);
+    ResourceType textType = graphWriter.putResourceType("text", ResourceType.DataType.STRING);
+    ResourceType handleType = graphWriter.putResourceType("handle", ResourceType.DataType.STRING);
 
     // entities
-    EntityType tweet = graphWriter.putEntityType("tweet");
-    EntityType user = graphWriter.putEntityType("user");
+    EntityType tweetType = graphWriter.putEntityType("tweet");
+    EntityType userType = graphWriter.putEntityType("user");
 
     // roles
-    RoleType writes = graphWriter.putRoleType("writes");
-    RoleType written = graphWriter.putRoleType("written");
+    RoleType writesType = graphWriter.putRoleType("writes");
+    RoleType writtenType = graphWriter.putRoleType("written");
 
     // relations
-    RelationType tweeted = graphWriter.putRelationType("tweeted").relates(writes).relates(written);
+    RelationType tweetedType = graphWriter.putRelationType("tweeted").relates(writesType).relates(writtenType);
 
     // resource and relation assignments
-    tweet.resource(id);
-    tweet.resource(text);
-    user.resource(handle);
-    user.plays(writes);
-    tweet.plays(written);
+    tweetType.resource(idType);
+    tweetType.resource(textType);
+    userType.resource(handleType);
+    userType.plays(writesType);
+    tweetType.plays(writtenType);
 
     // ------------------------ insert -----------------------
-    Entity user1 = user.addEntity();
-    Resource user1Handle = handle.putResource("User 1");
+    Entity user1 = userType.addEntity();
+    Resource user1Handle = handleType.putResource("User 1");
     user1.resource(user1Handle);
 
     graphWriter.commit();
@@ -70,10 +70,12 @@ public class Main {
     QueryBuilder qb = graphReader.graql();
 
     MatchQuery query = qb.match(var("x").isa("user")).limit(50);
-    ResourceType handle_ = graphReader.getResourceType("handle");
+
+    ResourceType handleType2 = graphReader.getResourceType("handle");
+
     for (Map<String, Concept> result : query) {
       Entity resultUser = result.get("x").asEntity();
-      Resource<?> resultUserResources = resultUser.resources(handle_).iterator().next();
+      Resource<?> resultUserResources = resultUser.resources(handleType2).iterator().next();
       System.out.println(resultUserResources.getValue());
     }
 
