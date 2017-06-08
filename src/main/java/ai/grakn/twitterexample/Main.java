@@ -12,7 +12,7 @@ Goal: demonstrate streaming data into Grakn, introduce interesting Grakn concept
  */
 
 // TODO:
-// - look at twitter streaming vs rest api
+// - are objects retrieved via a session rendered invalid when we close the session?
 
 import ai.grakn.Grakn;
 import ai.grakn.GraknGraph;
