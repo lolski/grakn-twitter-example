@@ -14,71 +14,73 @@ Goal: demonstrate streaming data into Grakn, introduce interesting Grakn concept
 // TODO:
 // - are objects retrieved via a session rendered invalid when we close the session?
 
+
+/*
+ * tutorial
+
+- pre-requisites
+  - need to have twitter account
+
+- tweet streaming
+
+- define ontology
+
+- insert data
+
+- query
+
+- advanced: moving away from grakn in memory
+
+- advanced: bulk streaming
+ */
+
 import ai.grakn.Grakn;
 import ai.grakn.GraknGraph;
 import ai.grakn.GraknSession;
 import ai.grakn.GraknTxType;
-import ai.grakn.concept.*;
-import ai.grakn.graql.MatchQuery;
-import ai.grakn.graql.QueryBuilder;
-import java.util.Map;
+import ai.grakn.twitterexample.util.Consumer2;
 
-import static ai.grakn.graql.Graql.*;
-
+import java.util.function.Function;
 
 public class Main {
+  // twitter credentials
+  private static final String consumerKey = "s81rBRQWHvGE1llHPYry7zSOm";
+  private static final String consumerSecret = "weQ8oZhBDZq9PjADlZJ897MAlxkXlNsUEH04jsqYPaLX4QCTKB";
+  private static final String accessToken = "1425775171-bnAiy4iF6y2SH1WMXPQmuwDm40zLTkBLk62qjxS";
+  private static final String accessTokenSecret = "XZ1SYSBOOFIH2jP6IKT3Je10tGtGKxstdPhuy2X4dHCUC";
+
+  // grakn settings
+  private static final String graphImplementation = Grakn.IN_MEMORY;
+  private static final String keyspace = "twitter-example";
+
   public static void main(String[] args) {
-    GraknSession session = Grakn.session(Grakn.IN_MEMORY, "MyGraph");
+    GraknSession session = Grakn.session(graphImplementation, keyspace);
 
-    // ------------------------ write ------------------------
+    // ------------------------ create Grakn ontology ---------------------------
+    GraknGraph ontologyWriter = session.open(GraknTxType.WRITE);
+    TweetOntology.createOntology(ontologyWriter);
+    ontologyWriter.commit();
+
+    // ------------------------ Twitter api - Grakn wiring ----------------------
+    Function<GraknGraph, Consumer2<String, String>> onTweetReceived = graknGraph -> {
+      return (screenName, tweet) -> {
+        System.out.println("user: " + screenName + ", text: " + tweet);
+        TweetOntology.insert(graknGraph, screenName, tweet);
+      };
+    };
+
+    // ------------------------ stream tweets into Grakn ------------------------
     GraknGraph graphWriter = session.open(GraknTxType.WRITE);
-
-    // resources
-    ResourceType idType = graphWriter.putResourceType("identifier", ResourceType.DataType.STRING);
-    ResourceType textType = graphWriter.putResourceType("text", ResourceType.DataType.STRING);
-    ResourceType handleType = graphWriter.putResourceType("handle", ResourceType.DataType.STRING);
-
-    // entities
-    EntityType tweetType = graphWriter.putEntityType("tweet");
-    EntityType userType = graphWriter.putEntityType("user");
-
-    // roles
-    RoleType writesType = graphWriter.putRoleType("writes");
-    RoleType writtenType = graphWriter.putRoleType("written");
-
-    // relations
-    RelationType tweetedType = graphWriter.putRelationType("tweeted").relates(writesType).relates(writtenType);
-
-    // resource and relation assignments
-    tweetType.resource(idType);
-    tweetType.resource(textType);
-    userType.resource(handleType);
-    userType.plays(writesType);
-    tweetType.plays(writtenType);
-
-    // ------------------------ insert -----------------------
-    Entity user1 = userType.addEntity();
-    Resource user1Handle = handleType.putResource("User 1");
-    user1.resource(user1Handle);
-
+    TweetStreamProcessor tweetStreamProcessor = new TweetStreamProcessor(
+        consumerKey, consumerSecret, accessToken, accessTokenSecret,
+        onTweetReceived.apply(graphWriter));
+    tweetStreamProcessor.run();
     graphWriter.commit();
 
-    // ------------------------ match ------------------------
-
+    // --------------------------- query data -----------------------------------
     GraknGraph graphReader = session.open(GraknTxType.READ);
-
-    QueryBuilder qb = graphReader.graql();
-
-    MatchQuery query = qb.match(var("x").isa("user")).limit(50);
-
-    ResourceType handleType2 = graphReader.getResourceType("handle");
-
-    for (Map<String, Concept> result : query) {
-      Entity resultUser = result.get("x").asEntity();
-      Resource<?> resultUserResources = resultUser.resources(handleType2).iterator().next();
-      System.out.println(resultUserResources.getValue());
-    }
-
     graphReader.close();
+
+    session.close();
   }
 }
