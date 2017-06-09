@@ -31,30 +31,14 @@ public class TweetOntology {
     graphWriter.commit();
   }
 
-  public static ResourceType getIdType(GraknGraph graph) { return graph.getResourceType("identifier"); }
-  public static ResourceType getTextType(GraknGraph graph) { return graph.getResourceType("text"); }
-  public static ResourceType getScreenNameType(GraknGraph graph) { return graph.getResourceType("screen_name"); }
+  public static Entity insertTweet(GraknGraph graknGraph, String tweet) {
+    EntityType tweetEntityType = graknGraph.getEntityType("tweet");
+    ResourceType tweetResouceType = graknGraph.getResourceType("text");
 
-  public static EntityType getTweetType(GraknGraph graph) { return graph.getEntityType("tweet"); }
-  public static EntityType getUserType(GraknGraph graph) { return graph.getEntityType("user"); }
+    Entity tweetEntity = tweetEntityType.addEntity();
+    Resource tweetResouce = tweetResouceType.putResource(tweet);
 
-  public static String insert(GraknGraph graknGraph, String screenName, String tweet) {
-    String userId = TweetOntology.upsertUser(graknGraph, screenName);
-    String tweetId = TweetOntology.insertTweet(graknGraph, tweet);
-    String association = TweetOntology.associate(graknGraph, userId, tweetId);
-    return association;
-  }
-
-  public static String upsertUser(GraknGraph graknGraph, String screenName) {
-    return "";
-  }
-
-  public static String insertTweet(GraknGraph graknGraph, String tweet) {
-    return "";
-  }
-
-  public static String associate(GraknGraph graknGraph, String userId, String tweetId) {
-    return "";
+    return tweetEntity.resource(tweetResouce);
   }
 }
 

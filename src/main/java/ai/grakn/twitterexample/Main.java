@@ -65,7 +65,7 @@ public class Main {
     Function<GraknGraph, Consumer2<String, String>> onTweetReceived = graknGraph -> {
       return (screenName, tweet) -> {
         System.out.println("user: " + screenName + ", text: " + tweet);
-        TweetOntology.insert(graknGraph, screenName, tweet);
+        TweetOntology.insertTweet(graknGraph, tweet);
       };
     };
 
