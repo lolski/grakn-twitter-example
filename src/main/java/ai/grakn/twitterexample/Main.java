@@ -35,9 +35,7 @@ Goal: demonstrate streaming data into Grakn, introduce interesting Grakn concept
  */
 
 import ai.grakn.Grakn;
-import ai.grakn.GraknGraph;
 import ai.grakn.GraknSession;
-import ai.grakn.GraknTxType;
 
 import java.util.function.BiConsumer;
 
@@ -54,13 +52,13 @@ public class Main {
 
   public static void main(String[] args) {
     try (GraknSession session = Grakn.session(graphImplementation, keyspace)) {
-      GraknTweetOntologyHelper.withAutoCommitSession(session, GraknTweetOntologyHelper::createOntology);
+      GraknTweetOntologyHelper.withAutoCommit(session, GraknTweetOntologyHelper::initTweetOntology);
 
       BiConsumer<String, String> onTweetReceived = (screenName, tweet) -> {
         System.out.println("user: " + screenName + ", text: " + tweet);
 
         GraknTweetOntologyHelper
-            .withAutoCommitSession(session, writer -> GraknTweetOntologyHelper.insertTweet(writer, tweet));
+            .withAutoCommit(session, writer -> GraknTweetOntologyHelper.insertTweet(writer, tweet));
       };
 
       AsyncTweetStreamProcessor tweetStreamProcessor = new AsyncTweetStreamProcessor(
