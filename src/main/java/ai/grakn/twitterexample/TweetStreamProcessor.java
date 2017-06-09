@@ -1,14 +1,14 @@
 package ai.grakn.twitterexample;
 
-import ai.grakn.GraknGraph;
-import ai.grakn.twitterexample.util.Consumer2;
 import twitter4j.*;
 import twitter4j.conf.Configuration;
 import twitter4j.conf.ConfigurationBuilder;
 
+import java.util.function.BiConsumer;
+
 
 public class TweetStreamProcessor {
-  public TweetStreamProcessor(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret, Consumer2<String, String> onTweetReceived) {
+  public TweetStreamProcessor(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret, BiConsumer<String, String> onTweetReceived) {
     Configuration conf = createConfiguration(consumerKey, consumerSecret, accessToken, accessTokenSecret);
     TweetListener tweetListener = new TweetListener(onTweetReceived);
 
@@ -37,12 +37,12 @@ public class TweetStreamProcessor {
 }
 
 class TweetListener implements StatusListener {
-  public TweetListener(Consumer2<String, String> onStatusReceived) {
+  public TweetListener(BiConsumer<String, String> onStatusReceived) {
     this.onStatusReceived = onStatusReceived;
   }
 
   public void onStatus(Status status) {
-    onStatusReceived.apply(status.getUser().getScreenName(), status.getText());
+    onStatusReceived.accept(status.getUser().getScreenName(), status.getText());
   }
 
   public void onDeletionNotice(StatusDeletionNotice statusDeletionNotice) {}
@@ -53,5 +53,5 @@ class TweetListener implements StatusListener {
   public void onScrubGeo(long lat, long long_) {}
   public void onStallWarning(StallWarning stallWarning) {}
 
-  private Consumer2<String, String> onStatusReceived;
+  private BiConsumer<String, String> onStatusReceived;
 }

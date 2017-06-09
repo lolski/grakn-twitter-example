@@ -38,9 +38,8 @@ import ai.grakn.Grakn;
 import ai.grakn.GraknGraph;
 import ai.grakn.GraknSession;
 import ai.grakn.GraknTxType;
-import ai.grakn.twitterexample.util.Consumer2;
 
-import java.util.function.Function;
+import java.util.function.BiConsumer;
 
 public class Main {
   // twitter credentials
@@ -53,34 +52,32 @@ public class Main {
   private static final String graphImplementation = Grakn.IN_MEMORY;
   private static final String keyspace = "twitter-example";
 
-  public static void main(String[] args) throws Exception {
-    GraknSession session = Grakn.session(graphImplementation, keyspace);
+  public static void main(String[] args) {
+    try (GraknSession session = Grakn.session(graphImplementation, keyspace)) {
+      // ------------------------ create Grakn ontology ---------------------------
+      GraknGraph ontologyWriter = session.open(GraknTxType.WRITE);
+      TweetOntology.createOntology(ontologyWriter);
+      ontologyWriter.commit();
 
-    // ------------------------ create Grakn ontology ---------------------------
-    GraknGraph ontologyWriter = session.open(GraknTxType.WRITE);
-    TweetOntology.createOntology(ontologyWriter);
-    ontologyWriter.commit();
+      // ------------------------ Twitter api - Grakn wiring ----------------------
+      BiConsumer<String, String> onTweetReceived = (screenName, tweet) -> {
+        System.out.println("user: " + screenName + ", text: " + tweet);
 
-    // ------------------------ Twitter api - Grakn wiring ----------------------
-    Consumer2<String, String> onTweetReceived = (screenName, tweet) -> {
-      System.out.println("user: " + screenName + ", text: " + tweet);
+        GraknGraph graphWriter = session.open(GraknTxType.WRITE);
+        TweetOntology.insertTweet(graphWriter, tweet);
+        graphWriter.commit();
+      };
 
-      GraknGraph graphWriter = session.open(GraknTxType.WRITE);
-      TweetOntology.insertTweet(graphWriter, tweet);
-      graphWriter.commit();
-    };
+      TweetStreamProcessor tweetStreamProcessor = new TweetStreamProcessor(
+          consumerKey, consumerSecret, accessToken, accessTokenSecret, onTweetReceived);
 
-    TweetStreamProcessor tweetStreamProcessor = new TweetStreamProcessor(
-        consumerKey, consumerSecret, accessToken, accessTokenSecret, onTweetReceived);
+      // ------------------------ stream tweets into Grakn ------------------------
+      tweetStreamProcessor.run();
 
-    // ------------------------ stream tweets into Grakn ------------------------
-    tweetStreamProcessor.run();
+      // --------------------------- query data -----------------------------------
+      try (GraknGraph graphReader = session.open(GraknTxType.READ)) {
 
-//
-//    // --------------------------- query data -----------------------------------
-//    GraknGraph graphReader = session.open(GraknTxType.READ);
-//    graphReader.close();
-
-//    session.close();
+      }
+    }
   }
 }
