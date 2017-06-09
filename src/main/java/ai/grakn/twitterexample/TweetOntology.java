@@ -28,7 +28,6 @@ public class TweetOntology {
     userType.plays(writesType);
     tweetType.plays(writtenType);
 
-    graphWriter.commit();
   }
 
   public static Entity insertTweet(GraknGraph graknGraph, String tweet) {
