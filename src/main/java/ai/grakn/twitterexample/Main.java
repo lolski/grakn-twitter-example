@@ -53,7 +53,7 @@ public class Main {
   private static final String graphImplementation = Grakn.IN_MEMORY;
   private static final String keyspace = "twitter-example";
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws Exception {
     GraknSession session = Grakn.session(graphImplementation, keyspace);
 
     // ------------------------ create Grakn ontology ---------------------------
@@ -62,25 +62,25 @@ public class Main {
     ontologyWriter.commit();
 
     // ------------------------ Twitter api - Grakn wiring ----------------------
-    Function<GraknGraph, Consumer2<String, String>> onTweetReceived = graknGraph -> {
-      return (screenName, tweet) -> {
-        System.out.println("user: " + screenName + ", text: " + tweet);
-        TweetOntology.insertTweet(graknGraph, tweet);
-      };
+    Consumer2<String, String> onTweetReceived = (screenName, tweet) -> {
+      System.out.println("user: " + screenName + ", text: " + tweet);
+
+      GraknGraph graphWriter = session.open(GraknTxType.WRITE);
+      TweetOntology.insertTweet(graphWriter, tweet);
+      graphWriter.commit();
     };
 
-    // ------------------------ stream tweets into Grakn ------------------------
-    GraknGraph graphWriter = session.open(GraknTxType.WRITE);
     TweetStreamProcessor tweetStreamProcessor = new TweetStreamProcessor(
-        consumerKey, consumerSecret, accessToken, accessTokenSecret,
-        onTweetReceived.apply(graphWriter));
+        consumerKey, consumerSecret, accessToken, accessTokenSecret, onTweetReceived);
+
+    // ------------------------ stream tweets into Grakn ------------------------
     tweetStreamProcessor.run();
-    graphWriter.commit();
 
-    // --------------------------- query data -----------------------------------
-    GraknGraph graphReader = session.open(GraknTxType.READ);
-    graphReader.close();
+//
+//    // --------------------------- query data -----------------------------------
+//    GraknGraph graphReader = session.open(GraknTxType.READ);
+//    graphReader.close();
 
-    session.close();
+//    session.close();
   }
 }
