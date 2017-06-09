@@ -38,15 +38,23 @@ public class TweetOntology {
   public static EntityType getTweetType(GraknGraph graph) { return graph.getEntityType("tweet"); }
   public static EntityType getUserType(GraknGraph graph) { return graph.getEntityType("user"); }
 
+  public static String insert(GraknGraph graknGraph, String screenName, String tweet) {
+    String userId = TweetOntology.upsertUser(graknGraph, screenName);
+    String tweetId = TweetOntology.insertTweet(graknGraph, tweet);
+    String association = TweetOntology.associate(graknGraph, userId, tweetId);
+    return association;
+  }
 
-  public static void insert(GraknGraph graknGraph, String user, String text) {
-    EntityType userType = getUserType(graknGraph);
-    ResourceType screenNameType = getScreenNameType(graknGraph);
+  public static String upsertUser(GraknGraph graknGraph, String screenName) {
+    return "";
+  }
 
-    Entity user1 = userType.addEntity();
-    Resource user1screenName = screenNameType.putResource(text);
-    user1.resource(user1screenName);
+  public static String insertTweet(GraknGraph graknGraph, String tweet) {
+    return "";
+  }
 
+  public static String associate(GraknGraph graknGraph, String userId, String tweetId) {
+    return "";
   }
 }
 

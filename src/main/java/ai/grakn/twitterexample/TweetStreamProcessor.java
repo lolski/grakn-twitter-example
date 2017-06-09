@@ -1,11 +1,11 @@
 package ai.grakn.twitterexample;
 
+import ai.grakn.GraknGraph;
 import ai.grakn.twitterexample.util.Consumer2;
 import twitter4j.*;
 import twitter4j.conf.Configuration;
 import twitter4j.conf.ConfigurationBuilder;
 
-import static ai.grakn.twitterexample.TwitterHelper.*;
 
 public class TweetStreamProcessor {
   public TweetStreamProcessor(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret, Consumer2<String, String> onTweetReceived) {
@@ -21,13 +21,7 @@ public class TweetStreamProcessor {
     twitterStream.sample(DEFAULT_LANGUAGE);
   }
 
-  private final String DEFAULT_LANGUAGE = "en";
-  private TwitterStreamFactory twitterStreamFactory;
-  private TwitterStream twitterStream;
-}
-
-class TwitterHelper {
-  public static Configuration createConfiguration(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret) {
+  private static Configuration createConfiguration(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret) {
     return new ConfigurationBuilder()
         .setDebugEnabled(false)
         .setOAuthConsumerKey(consumerKey)
@@ -36,6 +30,10 @@ class TwitterHelper {
         .setOAuthAccessTokenSecret(accessTokenSecret)
         .build();
   }
+  private final String DEFAULT_LANGUAGE = "en";
+
+  private TwitterStreamFactory twitterStreamFactory;
+  private TwitterStream twitterStream;
 }
 
 class TweetListener implements StatusListener {

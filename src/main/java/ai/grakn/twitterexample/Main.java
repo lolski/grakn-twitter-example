@@ -14,12 +14,33 @@ Goal: demonstrate streaming data into Grakn, introduce interesting Grakn concept
 // TODO:
 // - are objects retrieved via a session rendered invalid when we close the session?
 
+
+/*
+ * tutorial
+
+- pre-requisites
+  - need to have twitter account
+
+- tweet streaming
+
+- define ontology
+
+- insert data
+
+- query
+
+- advanced: moving away from grakn in memory
+
+- advanced: bulk streaming
+ */
+
 import ai.grakn.Grakn;
 import ai.grakn.GraknGraph;
 import ai.grakn.GraknSession;
 import ai.grakn.GraknTxType;
 import ai.grakn.twitterexample.util.Consumer2;
 
+import java.util.function.Function;
 
 public class Main {
   // twitter credentials
@@ -35,23 +56,28 @@ public class Main {
   public static void main(String[] args) {
     GraknSession session = Grakn.session(graphImplementation, keyspace);
 
-    // ------------------------ create Grakn ontology ------------------------
+    // ------------------------ create Grakn ontology ---------------------------
     GraknGraph ontologyWriter = session.open(GraknTxType.WRITE);
     TweetOntology.createOntology(ontologyWriter);
     ontologyWriter.commit();
 
+    // ------------------------ Twitter api - Grakn wiring ----------------------
+    Function<GraknGraph, Consumer2<String, String>> onTweetReceived = graknGraph -> {
+      return (screenName, tweet) -> {
+        System.out.println("user: " + screenName + ", text: " + tweet);
+        TweetOntology.insert(graknGraph, screenName, tweet);
+      };
+    };
+
     // ------------------------ stream tweets into Grakn ------------------------
     GraknGraph graphWriter = session.open(GraknTxType.WRITE);
-    Consumer2<String, String> onTweetReceived = (screenName, text) -> {
-      System.out.println("user: " + screenName + ", text: " + text);
-      TweetOntology.insert(graphWriter, screenName, text);
-    };
-    TweetStreamProcessor tweetStreamProcessor = new TweetStreamProcessor(consumerKey, consumerSecret,
-        accessToken, accessTokenSecret, onTweetReceived);
+    TweetStreamProcessor tweetStreamProcessor = new TweetStreamProcessor(
+        consumerKey, consumerSecret, accessToken, accessTokenSecret,
+        onTweetReceived.apply(graphWriter));
     tweetStreamProcessor.run();
     graphWriter.commit();
 
-    // ------------------------ query data ------------------------
+    // --------------------------- query data -----------------------------------
     GraknGraph graphReader = session.open(GraknTxType.READ);
     graphReader.close();
 
