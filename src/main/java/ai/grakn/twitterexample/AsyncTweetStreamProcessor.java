@@ -29,6 +29,7 @@ public class AsyncTweetStreamProcessor {
         .setOAuthAccessTokenSecret(accessTokenSecret)
         .build();
   }
+
   private final String DEFAULT_LANGUAGE = "en";
 
   private TwitterStreamFactory twitterStreamFactory;
