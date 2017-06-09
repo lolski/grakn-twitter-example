@@ -7,8 +7,8 @@ import twitter4j.conf.ConfigurationBuilder;
 import java.util.function.BiConsumer;
 
 
-public class TweetStreamProcessor {
-  public TweetStreamProcessor(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret, BiConsumer<String, String> onTweetReceived) {
+public class AsyncTweetStreamProcessor {
+  public AsyncTweetStreamProcessor(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret, BiConsumer<String, String> onTweetReceived) {
     Configuration conf = createConfiguration(consumerKey, consumerSecret, accessToken, accessTokenSecret);
     TweetListener tweetListener = new TweetListener(onTweetReceived);
 
@@ -17,7 +17,7 @@ public class TweetStreamProcessor {
     this.twitterStream.addListener(tweetListener);
   }
 
-  public void run() {
+  public void runAsync() {
     twitterStream.sample(DEFAULT_LANGUAGE);
   }
 

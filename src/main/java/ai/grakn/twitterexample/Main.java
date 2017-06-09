@@ -4,7 +4,7 @@ package ai.grakn.twitterexample;
 
 Goal: demonstrate streaming data into Grakn, introduce interesting Grakn concepts to the user
 - source candidate: public user tweets
-- data volume: small (small enough that we can run the program in a single node with a mid level compute power)
+- data volume: small (small enough that we can runAsync the program in a single node with a mid level compute power)
   - streaming api vs rest api?
 - questions:
   - two users who replies each other are close connections
@@ -54,30 +54,19 @@ public class Main {
 
   public static void main(String[] args) {
     try (GraknSession session = Grakn.session(graphImplementation, keyspace)) {
-      // ------------------------ create Grakn ontology ---------------------------
-      GraknGraph ontologyWriter = session.open(GraknTxType.WRITE);
-      TweetOntology.createOntology(ontologyWriter);
-      ontologyWriter.commit();
+      GraknTweetOntologyHelper.withAutoCommitSession(session, GraknTweetOntologyHelper::createOntology);
 
-      // ------------------------ Twitter api - Grakn wiring ----------------------
       BiConsumer<String, String> onTweetReceived = (screenName, tweet) -> {
         System.out.println("user: " + screenName + ", text: " + tweet);
 
-        GraknGraph graphWriter = session.open(GraknTxType.WRITE);
-        TweetOntology.insertTweet(graphWriter, tweet);
-        graphWriter.commit();
+        GraknTweetOntologyHelper
+            .withAutoCommitSession(session, writer -> GraknTweetOntologyHelper.insertTweet(writer, tweet));
       };
 
-      TweetStreamProcessor tweetStreamProcessor = new TweetStreamProcessor(
+      AsyncTweetStreamProcessor tweetStreamProcessor = new AsyncTweetStreamProcessor(
           consumerKey, consumerSecret, accessToken, accessTokenSecret, onTweetReceived);
 
-      // ------------------------ stream tweets into Grakn ------------------------
-      tweetStreamProcessor.run();
-
-      // --------------------------- query data -----------------------------------
-      try (GraknGraph graphReader = session.open(GraknTxType.READ)) {
-
-      }
+      tweetStreamProcessor.runAsync(); // runs on a separate thread
     }
   }
 }
