@@ -6,22 +6,21 @@ import twitter4j.conf.ConfigurationBuilder;
 
 import java.util.function.BiConsumer;
 
-
 public class AsyncTweetStreamProcessor {
   public AsyncTweetStreamProcessor(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret, BiConsumer<String, String> onTweetReceived) {
-    Configuration conf = createConfiguration(consumerKey, consumerSecret, accessToken, accessTokenSecret);
+    Configuration conf = createTwitterConfiguration(consumerKey, consumerSecret, accessToken, accessTokenSecret);
     TweetListener tweetListener = new TweetListener(onTweetReceived);
 
     this.twitterStreamFactory = new TwitterStreamFactory(conf);
-    this.twitterStream = twitterStreamFactory.getInstance();
-    this.twitterStream.addListener(tweetListener);
+    this.twitterStreamSingleton = twitterStreamFactory.getInstance();
+    this.twitterStreamSingleton.addListener(tweetListener);
   }
 
   public void runAsync() {
-    twitterStream.sample(DEFAULT_LANGUAGE);
+    twitterStreamSingleton.sample(DEFAULT_LANGUAGE);
   }
 
-  private static Configuration createConfiguration(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret) {
+  private static Configuration createTwitterConfiguration(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret) {
     return new ConfigurationBuilder()
         .setDebugEnabled(false)
         .setOAuthConsumerKey(consumerKey)
@@ -33,9 +32,10 @@ public class AsyncTweetStreamProcessor {
   private final String DEFAULT_LANGUAGE = "en";
 
   private TwitterStreamFactory twitterStreamFactory;
-  private TwitterStream twitterStream;
+  private TwitterStream twitterStreamSingleton;
 }
 
+// An implementation which implements twitter4j's StatusListener
 class TweetListener implements StatusListener {
   public TweetListener(BiConsumer<String, String> onStatusReceived) {
     this.onStatusReceived = onStatusReceived;
@@ -44,12 +44,13 @@ class TweetListener implements StatusListener {
   public void onStatus(Status status) {
     onStatusReceived.accept(status.getUser().getScreenName(), status.getText());
   }
-
-  public void onDeletionNotice(StatusDeletionNotice statusDeletionNotice) {}
-  public void onTrackLimitationNotice(int numberOfLimitedStatuses) {}
   public void onException(Exception ex) {
     ex.printStackTrace();
   }
+
+  // a bunch of empty event handler implementations, we're not using them
+  public void onDeletionNotice(StatusDeletionNotice statusDeletionNotice) {}
+  public void onTrackLimitationNotice(int numberOfLimitedStatuses) {}
   public void onScrubGeo(long lat, long long_) {}
   public void onStallWarning(StallWarning stallWarning) {}
 
