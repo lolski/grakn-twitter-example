@@ -4,7 +4,7 @@ package ai.grakn.twitterexample;
 
 Goal: demonstrate streaming data into Grakn, introduce interesting Grakn concepts to the user
 - source candidate: public user tweets
-- data volume: small (small enough that we can run the program in a single node with a mid level compute power)
+- data volume: small (small enough that we can runAsync the program in a single node with a mid level compute power)
   - streaming api vs rest api?
 - questions:
   - two users who replies each other are close connections
@@ -35,12 +35,9 @@ Goal: demonstrate streaming data into Grakn, introduce interesting Grakn concept
  */
 
 import ai.grakn.Grakn;
-import ai.grakn.GraknGraph;
 import ai.grakn.GraknSession;
-import ai.grakn.GraknTxType;
-import ai.grakn.twitterexample.util.Consumer2;
 
-import java.util.function.Function;
+import java.util.function.BiConsumer;
 
 public class Main {
   // twitter credentials
@@ -54,33 +51,20 @@ public class Main {
   private static final String keyspace = "twitter-example";
 
   public static void main(String[] args) {
-    GraknSession session = Grakn.session(graphImplementation, keyspace);
+    try (GraknSession session = Grakn.session(graphImplementation, keyspace)) {
+      GraknTweetOntologyHelper.withAutoCommit(session, GraknTweetOntologyHelper::initTweetOntology);
 
-    // ------------------------ create Grakn ontology ---------------------------
-    GraknGraph ontologyWriter = session.open(GraknTxType.WRITE);
-    TweetOntology.createOntology(ontologyWriter);
-    ontologyWriter.commit();
-
-    // ------------------------ Twitter api - Grakn wiring ----------------------
-    Function<GraknGraph, Consumer2<String, String>> onTweetReceived = graknGraph -> {
-      return (screenName, tweet) -> {
+      BiConsumer<String, String> onTweetReceived = (screenName, tweet) -> {
         System.out.println("user: " + screenName + ", text: " + tweet);
-        TweetOntology.insert(graknGraph, screenName, tweet);
+
+        GraknTweetOntologyHelper
+            .withAutoCommit(session, writer -> GraknTweetOntologyHelper.insertTweet(writer, tweet));
       };
-    };
 
-    // ------------------------ stream tweets into Grakn ------------------------
-    GraknGraph graphWriter = session.open(GraknTxType.WRITE);
-    TweetStreamProcessor tweetStreamProcessor = new TweetStreamProcessor(
-        consumerKey, consumerSecret, accessToken, accessTokenSecret,
-        onTweetReceived.apply(graphWriter));
-    tweetStreamProcessor.run();
-    graphWriter.commit();
+      AsyncTweetStreamProcessor tweetStreamProcessor = new AsyncTweetStreamProcessor(
+          consumerKey, consumerSecret, accessToken, accessTokenSecret, onTweetReceived);
 
-    // --------------------------- query data -----------------------------------
-    GraknGraph graphReader = session.open(GraknTxType.READ);
-    graphReader.close();
-
-    session.close();
+      tweetStreamProcessor.runAsync(); // runs on a separate thread
+    }
   }
 }
