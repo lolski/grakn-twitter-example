@@ -18,6 +18,8 @@
 ### Insert Tweet
 ### Upsert User
 ### Relating The Tweet To The User
-## Defining Query
+## Performing Simple Queries
+### Defining The Query
+### Performing The Query
 ## Running The Application
 ## Conclusion
