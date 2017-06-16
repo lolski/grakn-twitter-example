@@ -3,6 +3,7 @@
 - How to define a simple Grakn.ai ontology using the Java API
 - How to stream public tweets with the [Twitter4J](http://twitter4j.org/ "Twitter4J") library
 - How to insert the tweets into Grakn.ai knowledge base
+- How to perform simple queries on the knowledge base
 
 ## Prerequisites
 ### Registering Your Own Twitter Application
@@ -17,5 +18,6 @@
 ### Insert Tweet
 ### Upsert User
 ### Relating The Tweet To The User
+## Defining Query
 ## Running The Application
 ## Conclusion
