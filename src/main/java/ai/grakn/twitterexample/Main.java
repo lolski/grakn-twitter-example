@@ -58,8 +58,10 @@ public class Main {
       listenToTwitterStreamAsync(consumerKey, consumerSecret, accessToken, accessTokenSecret, (screenName, tweet) -> {
         withAutoCommit(session, graknGraph -> {
           insertUserTweet(graknGraph, screenName, tweet); // insert tweet
-//          computeTweetCountPerUser(graknGraph.graql()).forEach(count ->
-//              System.out.println(count.get("user") + " tweeted " + count.get("count") + " times.")); // print stats
+          computeTweetCountPerUser(graknGraph.graql()).forEach(count -> {
+              String message = count.get("user") + " tweeted " + count.get("count") + " times.");
+              System.out.println(message); // print stats
+          });
         });
       });
     }
