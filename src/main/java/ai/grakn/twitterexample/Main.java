@@ -4,7 +4,7 @@ package ai.grakn.twitterexample;
 
 Goal: demonstrate streaming data into Grakn, introduce interesting Grakn concepts to the user
 - source candidate: public user tweets
-- data volume: small (small enough that we can runAsync the program in a single node with a mid level compute power)
+- data volume: small (small enough that we can listenToTwitterStreamAsync the program in a single node with a mid level compute power)
   - streaming api vs rest api?
 - questions:
   - two users who replies each other are close connections
@@ -36,9 +36,12 @@ Goal: demonstrate streaming data into Grakn, introduce interesting Grakn concept
 
 import ai.grakn.Grakn;
 import ai.grakn.GraknSession;
-import ai.grakn.concept.Entity;
 
-import java.util.function.BiConsumer;
+import java.util.Map;
+import java.util.stream.Stream;
+
+import static ai.grakn.twitterexample.GraknTweetOntologyHelper.*;
+import static ai.grakn.twitterexample.AsyncTweetStreamProcessorHelper.*;
 
 public class Main {
   // twitter credentials
@@ -53,20 +56,21 @@ public class Main {
 
   public static void main(String[] args) {
     try (GraknSession session = Grakn.session(graphImplementation, keyspace)) {
-      BiConsumer<String, String> onTweetReceived = (screenName, tweet) -> {
-        System.out.println("user: " + screenName + ", text: " + tweet);
+      withGraknGraph(session, graknGraph -> initTweetOntology(graknGraph)); // initialize ontology
 
-        GraknTweetOntologyHelper.withAutoCommit(session, graknGraph ->
-          GraknTweetOntologyHelper.insertUserTweet(graknGraph, screenName, tweet)
-        );
-      };
-
-      AsyncTweetStreamProcessor tweetStreamProcessor = new AsyncTweetStreamProcessor(
-          consumerKey, consumerSecret, accessToken, accessTokenSecret, onTweetReceived);
-
-      GraknTweetOntologyHelper.withAutoCommit(session, GraknTweetOntologyHelper::initTweetOntology); // create ontology
-
-      tweetStreamProcessor.runAsync();
+      listenToTwitterStreamAsync(consumerKey, consumerSecret, accessToken, accessTokenSecret, (screenName, tweet) -> {
+        withGraknGraph(session, graknGraph -> {
+          insertUserTweet(graknGraph, screenName, tweet); // insert tweet
+          Stream<Map.Entry<String, Long>> result = calculateTweetCountPerUser(graknGraph); // query
+          prettyPrintQueryResult(result); // display
+        });
+      });
     }
+  }
+
+  public static void prettyPrintQueryResult(Stream<Map.Entry<String, Long>> result) {
+    System.out.println("------");
+    result.forEach(e -> System.out.println("-- user " + e.getKey() + " tweeted " + e.getValue() + " time(s)."));
+    System.out.println("------");
   }
 }
