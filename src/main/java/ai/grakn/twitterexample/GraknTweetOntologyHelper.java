@@ -30,7 +30,7 @@ public class GraknTweetOntologyHelper {
     RoleType writtenByType = graknGraph.putRoleType("written_by");
 
     // relations
-    RelationType tweetedType = graknGraph.putRelationType("insertTweetedRelation").relates(writesType).relates(writtenByType);
+    RelationType tweetedType = graknGraph.putRelationType("tweeted").relates(writesType).relates(writtenByType);
 
     // resource and relation assignments
     tweetType.resource(idType);
@@ -73,11 +73,16 @@ public class GraknTweetOntologyHelper {
     return tweetEntity.resource(tweetResource);
   }
 
-  public static Entity insertTweetedRelation(GraknGraph graknGraph, Entity user, Entity tweet) {
-//    RelationType tweetedType = graknGraph.getRelationType("insertTweetedRelation");
-//    Relation tweetedRelation = tweetedType.addRelation();
-//    tweetedRelation.
-    return null;
+  public static Relation insertTweetedRelation(GraknGraph graknGraph, Entity user, Entity tweet) {
+    RelationType tweetedType = graknGraph.getRelationType("tweeted");
+    RoleType writesType = graknGraph.getRoleType("writes");
+    RoleType writtenByType = graknGraph.getRoleType("written_by");
+
+    Relation tweetedRelation = tweetedType.addRelation()
+        .addRolePlayer(writesType, user)
+        .addRolePlayer(writtenByType, tweet);
+
+    return tweetedRelation;
   }
 
   public static void withAutoCommit(GraknSession session, Consumer<GraknGraph> fn) {
