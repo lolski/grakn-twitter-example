@@ -56,11 +56,9 @@ public class Main {
       BiConsumer<String, String> onTweetReceived = (screenName, tweet) -> {
         System.out.println("user: " + screenName + ", text: " + tweet);
 
-        GraknTweetOntologyHelper.withAutoCommit(session, graknGraph -> {
-          Entity tweetEntity = GraknTweetOntologyHelper.insertTweet(graknGraph, tweet);
-          Entity userEntity = GraknTweetOntologyHelper.insertUserIfNotExist(graknGraph, screenName);
-          GraknTweetOntologyHelper.insertTweetedRelation(graknGraph, userEntity, tweetEntity);
-        });
+        GraknTweetOntologyHelper.withAutoCommit(session, graknGraph ->
+          GraknTweetOntologyHelper.insertUserTweet(graknGraph, screenName, tweet)
+        );
       };
 
       AsyncTweetStreamProcessor tweetStreamProcessor = new AsyncTweetStreamProcessor(
@@ -68,7 +66,7 @@ public class Main {
 
       GraknTweetOntologyHelper.withAutoCommit(session, GraknTweetOntologyHelper::initTweetOntology); // create ontology
 
-      tweetStreamProcessor.runAsync(); // runs on a separate thread
+      tweetStreamProcessor.runAsync();
     }
   }
 }
