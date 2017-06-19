@@ -59,7 +59,7 @@ public class Main {
         withAutoCommit(session, graknGraph -> {
           insertUserTweet(graknGraph, screenName, tweet); // insert tweet
           computeTweetCountPerUser(graknGraph.graql()).forEach(count -> {
-            String message = count.get("user") + " tweeted " + count.get("count") + " times.");
+            String message = count.get("user") + " tweeted " + count.get("count") + " times.";
             System.out.println(message); // print stats
           });
         });
