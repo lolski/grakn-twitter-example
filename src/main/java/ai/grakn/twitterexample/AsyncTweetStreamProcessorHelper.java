@@ -6,18 +6,20 @@ import twitter4j.conf.ConfigurationBuilder;
 
 import java.util.function.BiConsumer;
 
-public class AsyncTweetStreamProcessor {
-  public AsyncTweetStreamProcessor(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret, BiConsumer<String, String> onTweetReceived) {
+public class AsyncTweetStreamProcessorHelper {
+  public static TwitterStream listenToTwitterStreamAsync(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret, BiConsumer<String, String> onTweetReceived) {
+    final String DEFAULT_LANGUAGE = "en";
+
     Configuration conf = createTwitterConfiguration(consumerKey, consumerSecret, accessToken, accessTokenSecret);
     TweetListener tweetListener = new TweetListener(onTweetReceived);
 
-    this.twitterStreamFactory = new TwitterStreamFactory(conf);
-    this.twitterStreamSingleton = twitterStreamFactory.getInstance();
-    this.twitterStreamSingleton.addListener(tweetListener);
-  }
+    TwitterStreamFactory twitterStreamFactory = new TwitterStreamFactory(conf);
+    TwitterStream twitterStreamSingleton = twitterStreamFactory.getInstance();
+    twitterStreamSingleton.addListener(tweetListener);
 
-  public void runAsync() {
     twitterStreamSingleton.sample(DEFAULT_LANGUAGE);
+
+    return twitterStreamSingleton;
   }
 
   private static Configuration createTwitterConfiguration(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret) {
@@ -29,11 +31,6 @@ public class AsyncTweetStreamProcessor {
         .setOAuthAccessTokenSecret(accessTokenSecret)
         .build();
   }
-
-  private final String DEFAULT_LANGUAGE = "en";
-
-  private TwitterStreamFactory twitterStreamFactory;
-  private TwitterStream twitterStreamSingleton;
 }
 
 // An implementation which implements twitter4j's StatusListener
