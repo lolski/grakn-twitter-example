@@ -53,7 +53,7 @@ public class Main {
 
   public static void main(String[] args) {
     try (GraknSession session = Grakn.session(graphImplementation, keyspace)) {
-      GraknTweetOntologyHelper.withAutoCommit(session, graknGraph -> initTweetOntology(graknGraph)); // initialize ontology
+      withAutoCommit(session, graknGraph -> initTweetOntology(graknGraph)); // initialize ontology
 
       listenToTwitterStreamAsync(consumerKey, consumerSecret, accessToken, accessTokenSecret, (screenName, tweet) -> {
         withAutoCommit(session, graknGraph -> {
