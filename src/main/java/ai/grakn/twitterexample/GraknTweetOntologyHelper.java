@@ -94,7 +94,7 @@ public class GraknTweetOntologyHelper {
     return tweetedRelation;
   }
 
-  public static Stream<Map<String, String>> countTweetPerUser(QueryBuilder qb) {
+  public static Stream<Map<String, String>> computeTweetCountPerUser(QueryBuilder qb) {
     return null;
   }
 

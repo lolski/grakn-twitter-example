@@ -36,11 +36,9 @@ Goal: demonstrate streaming data into Grakn, introduce interesting Grakn concept
 
 import ai.grakn.Grakn;
 import ai.grakn.GraknSession;
-import ai.grakn.concept.Entity;
 
-import java.util.Map;
 import java.util.function.BiConsumer;
-import java.util.stream.Stream;
+import static ai.grakn.twitterexample.GraknTweetOntologyHelper.*;
 
 public class Main {
   // twitter credentials
@@ -58,19 +56,17 @@ public class Main {
 
       // upon receiving a new tweet from the public stream, insert it into the knowledge graph and print the updated stats
       BiConsumer<String, String> onTweetReceived = (screenName, tweet) -> {
-        GraknTweetOntologyHelper.withAutoCommit(session, graknGraph -> {
-          GraknTweetOntologyHelper.insertUserTweet(graknGraph, screenName, tweet); // insert tweet
-
-          GraknTweetOntologyHelper.countTweetPerUser(graknGraph.graql()).forEach(count ->
-            System.out.println(count.get("user") + " tweeted " + count.get("count") + " times.") // print stats
-          );
+        withAutoCommit(session, graknGraph -> {
+          insertUserTweet(graknGraph, screenName, tweet); // insert tweet
+          computeTweetCountPerUser(graknGraph.graql()).forEach(count ->
+              System.out.println(count.get("user") + " tweeted " + count.get("count") + " times.")); // print stats
         });
       };
 
       AsyncTweetStreamProcessor tweetStreamProcessor = new AsyncTweetStreamProcessor(
           consumerKey, consumerSecret, accessToken, accessTokenSecret, onTweetReceived);
 
-      GraknTweetOntologyHelper.withAutoCommit(session, GraknTweetOntologyHelper::initTweetOntology); // create ontology
+      GraknTweetOntologyHelper.withAutoCommit(session, graknGraph -> initTweetOntology(graknGraph)); // create ontology
 
       tweetStreamProcessor.runAsync();
     }
