@@ -38,7 +38,9 @@ import ai.grakn.Grakn;
 import ai.grakn.GraknSession;
 import ai.grakn.concept.Entity;
 
+import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.stream.Stream;
 
 public class Main {
   // twitter credentials
@@ -54,11 +56,15 @@ public class Main {
   public static void main(String[] args) {
     try (GraknSession session = Grakn.session(graphImplementation, keyspace)) {
       BiConsumer<String, String> onTweetReceived = (screenName, tweet) -> {
-        System.out.println("user: " + screenName + ", text: " + tweet);
+        GraknTweetOntologyHelper.withAutoCommit(session, graknGraph -> {
+          // insert tweet
+          GraknTweetOntologyHelper.insertUserTweet(graknGraph, screenName, tweet);
 
-        GraknTweetOntologyHelper.withAutoCommit(session, graknGraph ->
-          GraknTweetOntologyHelper.insertUserTweet(graknGraph, screenName, tweet)
-        );
+          // print stats
+          GraknTweetOntologyHelper.countTweetPerUser(graknGraph.graql()).forEach(count ->
+            System.out.println(count.get("user") + " tweeted " + count.get("count") + " times.")
+          );
+        });
       };
 
       AsyncTweetStreamProcessor tweetStreamProcessor = new AsyncTweetStreamProcessor(

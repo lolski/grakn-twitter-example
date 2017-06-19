@@ -9,8 +9,11 @@ import ai.grakn.graql.QueryBuilder;
 import ai.grakn.graql.admin.Answer;
 
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static ai.grakn.graql.Graql.var;
 
@@ -89,6 +92,10 @@ public class GraknTweetOntologyHelper {
         .addRolePlayer(writtenByType, tweet);
 
     return tweetedRelation;
+  }
+
+  public static Stream<Map<String, String>> countTweetPerUser(QueryBuilder qb) {
+    return null;
   }
 
   public static void withAutoCommit(GraknSession session, Consumer<GraknGraph> fn) {
