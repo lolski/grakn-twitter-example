@@ -53,10 +53,10 @@ public class Main {
 
   public static void main(String[] args) {
     try (GraknSession session = Grakn.session(graphImplementation, keyspace)) {
-      withAutoCommit(session, graknGraph -> initTweetOntology(graknGraph)); // initialize ontology
+      withGraknGraph(session, graknGraph -> initTweetOntology(graknGraph)); // initialize ontology
 
       listenToTwitterStreamAsync(consumerKey, consumerSecret, accessToken, accessTokenSecret, (screenName, tweet) -> {
-        withAutoCommit(session, graknGraph -> {
+        withGraknGraph(session, graknGraph -> {
           insertUserTweet(graknGraph, screenName, tweet); // insert tweet
           computeTweetCountPerUser(graknGraph.graql()).forEach(count -> {
             String message = count.get("user") + " tweeted " + count.get("count") + " times.";

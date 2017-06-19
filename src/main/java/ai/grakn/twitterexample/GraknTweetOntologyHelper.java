@@ -98,7 +98,8 @@ public class GraknTweetOntologyHelper {
     return null;
   }
 
-  public static void withAutoCommit(GraknSession session, Consumer<GraknGraph> fn) {
+  // TODO: properly handle exception
+  public static void withGraknGraph(GraknSession session, Consumer<GraknGraph> fn) {
     GraknGraph graphWriter = session.open(GraknTxType.WRITE);
     fn.accept(graphWriter);
     graphWriter.commit();
