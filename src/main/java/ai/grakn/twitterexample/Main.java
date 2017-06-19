@@ -37,6 +37,9 @@ Goal: demonstrate streaming data into Grakn, introduce interesting Grakn concept
 import ai.grakn.Grakn;
 import ai.grakn.GraknSession;
 
+import java.util.Map;
+import java.util.stream.Stream;
+
 import static ai.grakn.twitterexample.GraknTweetOntologyHelper.*;
 import static ai.grakn.twitterexample.AsyncTweetStreamProcessorHelper.*;
 
@@ -58,12 +61,16 @@ public class Main {
       listenToTwitterStreamAsync(consumerKey, consumerSecret, accessToken, accessTokenSecret, (screenName, tweet) -> {
         withGraknGraph(session, graknGraph -> {
           insertUserTweet(graknGraph, screenName, tweet); // insert tweet
-          computeTweetCountPerUser(graknGraph.graql()).forEach(count -> {
-            String message = count.get("user") + " tweeted " + count.get("count") + " times.";
-            System.out.println(message); // print stats
-          });
+          Stream<Map.Entry<String, Long>> result = calculateTweetCountPerUser(graknGraph); // query
+          prettyPrintQueryResult(result); // display
         });
       });
     }
+  }
+
+  public static void prettyPrintQueryResult(Stream<Map.Entry<String, Long>> result) {
+    System.out.println("------");
+    result.forEach(e -> System.out.println("-- user " + e.getKey() + " tweeted " + e.getValue() + " time(s)."));
+    System.out.println("------");
   }
 }

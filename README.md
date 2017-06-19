@@ -1,4 +1,6 @@
 # Streaming Public Tweets
+In this tutorial we will look at how to work with Twitter Streaming API and Grakn.ai.
+
 ## What You Will Learn:
 - How to define a simple Grakn.ai ontology using the Java API
 - How to stream public tweets with the [Twitter4J](http://twitter4j.org/ "Twitter4J") library

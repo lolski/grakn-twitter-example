@@ -4,17 +4,18 @@ import ai.grakn.GraknGraph;
 import ai.grakn.GraknSession;
 import ai.grakn.GraknTxType;
 import ai.grakn.concept.*;
+import ai.grakn.graql.AggregateQuery;
 import ai.grakn.graql.MatchQuery;
 import ai.grakn.graql.QueryBuilder;
 import ai.grakn.graql.admin.Answer;
+import ai.grakn.graql.analytics.CountQuery;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import static ai.grakn.graql.Graql.count;
+import static ai.grakn.graql.Graql.group;
 import static ai.grakn.graql.Graql.var;
 
 public class GraknTweetOntologyHelper {
@@ -94,8 +95,29 @@ public class GraknTweetOntologyHelper {
     return tweetedRelation;
   }
 
-  public static Stream<Map<String, String>> computeTweetCountPerUser(QueryBuilder qb) {
-    return null;
+  public static Stream<Map.Entry<String, Long>> calculateTweetCountPerUser(GraknGraph graknGraph) {
+    // build query
+    QueryBuilder qb = graknGraph.graql();
+    AggregateQuery q = qb.match(
+        var("user").isa("user"),
+        var("tweet").isa("tweet"),
+        var().rel("writes", "user").rel("written_by", "tweet").isa("tweeted")
+        ).aggregate(group("user", count()));
+
+    // execute query
+    Map<Concept, Long> result = ((Map<Concept, Long>) q.execute());
+
+    // map Map<Concept, Long> into Stream<Map.Entry<String, Long>> before returning
+    ResourceType screenNameResourceType = graknGraph.getResourceType("screen_name");
+
+    Stream<Map.Entry<String, Long>> mapped = result.entrySet().stream().map(entry -> {
+      Concept key = entry.getKey();
+      Long value = entry.getValue();
+      String screenName = (String) key.asEntity().resources(screenNameResourceType).iterator().next().getValue();
+      return new HashMap.SimpleImmutableEntry<>(screenName, value);
+    });
+
+    return mapped;
   }
 
   // TODO: properly handle exception
