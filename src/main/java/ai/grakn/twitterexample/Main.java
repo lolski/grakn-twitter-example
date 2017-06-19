@@ -55,14 +55,14 @@ public class Main {
 
   public static void main(String[] args) {
     try (GraknSession session = Grakn.session(graphImplementation, keyspace)) {
+
+      // upon receiving a new tweet from the public stream, insert it into the knowledge graph and print the updated stats
       BiConsumer<String, String> onTweetReceived = (screenName, tweet) -> {
         GraknTweetOntologyHelper.withAutoCommit(session, graknGraph -> {
-          // insert tweet
-          GraknTweetOntologyHelper.insertUserTweet(graknGraph, screenName, tweet);
+          GraknTweetOntologyHelper.insertUserTweet(graknGraph, screenName, tweet); // insert tweet
 
-          // print stats
           GraknTweetOntologyHelper.countTweetPerUser(graknGraph.graql()).forEach(count ->
-            System.out.println(count.get("user") + " tweeted " + count.get("count") + " times.")
+            System.out.println(count.get("user") + " tweeted " + count.get("count") + " times.") // print stats
           );
         });
       };
