@@ -394,11 +394,11 @@ public static void main(String[] args) {
 
 ```
 
-## Crafting And Performing Simple Queries
+## Crafting Simple Queries Using GraQL
 
 We will perform a query which will count the number of tweet a user has posted since the program started. It can be achieved it by utilizing the aggregate query feature.
 
-Let's look at how we can build it step-by-step, start by creating a `QueryBuilder` object for composing the query.
+Let's look at how we can build it step-by-step, start by creating a `QueryBuilder` object which we will use to craft the query in GraQL.
 
 ```java
 QueryBuilder qb = graknGraph.graql();
@@ -417,7 +417,9 @@ qb.match(
   var().rel("writes", "user").rel("written_by", "tweet").isa("tweeted"))
 ```
 
-This query itself will return everything we have stored preserving the relation between the tweet and the user. We will use this result as the basis of our aggregation. Let's perform an aggregate, grouped by `user`. We supply `count()` which will return the number of occurences.
+The query we've just defined will return every user and tweet along with their relations. We will use it as the basis of the aggregate query. 
+
+Let's do some aggregation over the result here. We will supply `"user"` and `count()` as the argument for `group()`, which essentially tells Grakn to group the result by username, and count the number of occurences per username.
 
 ```java
 qb.match(
@@ -427,7 +429,7 @@ qb.match(
 ).aggregate(group("user", count()));
 ```
 
- The query will return the result as an object of type `Map<Concept, Long>`. To be able to conveniently iterate over the result, I will transform it such that the end result will be stored as a `Stream<Map.Entry<String, Long>>`, i.e., a stream of pairs of username and tweet count.
+ The query will now return "the number of tweet a user has posted", which is what we want, as an object of type `Map<Concept, Long>`. To be able to conveniently iterate, we will transform it into the relatively more straightforward type `Stream<Map.Entry<String, Long>>`, i.e., a stream of pairs of username and tweet count.
 
 ```java
   // execute query
@@ -444,7 +446,7 @@ qb.match(
   });
 ```
 
-Voila! Here's how `calculateTweetCountPerUser` will look like.
+Voila! Here's how `calculateTweetCountPerUser` should look like.
 
 ```java
 public static Stream<Map.Entry<String, Long>> calculateTweetCountPerUser(GraknGraph graknGraph) {
@@ -473,8 +475,12 @@ public static Stream<Map.Entry<String, Long>> calculateTweetCountPerUser(GraknGr
 }
 ```
 
+
+
 ## Running The Application
 
 We're all set! 
 
-## Conclusion
+The project can be downloaded at 
+
+Future improvements: batching, more sophisticated queries
