@@ -282,19 +282,19 @@ public static void main(String[] args) {
 
 ## Inserting Tweets Into The Knowledge Graph
 
-At this point our little program already has a clearly defined ontology, and is able to listen to incoming tweets. However we have yet to decide what we're going to do with them. In this section we will have a look at how to:
+At this point our little program already has a clearly defined ontology, and is able to listen to incoming tweets. However, we have yet to decide what exactly we're going to do with them. In this section we will have a look at how to:
 
 1. Insert an incoming tweet into the knowledge graph
-2. "Upsert" a user, i.e., insert only if we haven't already
-3. Maintain an association between a tweet and the user who posted it
+2. Insert a user who posted the tweet, only once — we don't want to insert the same user twice
+3. Maintain an association between a tweet and the user
 
 ### Insert A Tweet
 
-To insert a tweet, we must create a `tweet` entity, a `text` resource, and associate said resource with the entity.
+To insert a tweet, we must create a `tweet` entity and a `text` resource to hold the tweet's textual data, before associating said resource with the entity.
 
-Let's do that in a new method `insertTweet()`, under `GraknTweetOntologyHelper` class. The method will accept a string and inserts them into the knowledge graph, before returning the `Entity` object of the said tweet.
+Let's do that with a new method. It will accept a single `String` and inserts it into the knowledge graph, before returning the `Entity` of said tweet.
 
-Pay attention to how we need to retrieve the `EntityTypes` and `ResourceTypes` of entity and resource we are interested in. We need them in order to perform the actual insertion.
+Pay attention to how we need to retrieve the `EntityTypes` and `ResourceTypes` of entity and resource we are interested in — we need them in order to perform the actual insertion.
 
 ```java
 public static Entity insertTweet(GraknGraph graknGraph, String tweet) {
@@ -351,7 +351,7 @@ public static Entity insertUserIfNotExist(GraknGraph graknGraph, String screenNa
 
 We're almost there with a complete tweet insertion functionality! There's only one thing left to do which is to relate the `tweet` entity with the `user` entity. Preserving this connection is crucial, after all.
 
-The following function will accept a user and a tweet entity and creates a relation.
+The following function will create a relation between the user and tweet that we specify.
 
 ```java
 public static Relation insertTweetedRelation(GraknGraph graknGraph, Entity user, Entity tweet) {
@@ -396,7 +396,53 @@ public static void main(String[] args) {
 
 ## Performing Simple Queries
 
-We will perform a simple aggregation query which will calculate the tweet count per user. The query will return a . We will return a `Stream` of 
+### Building The Query
+
+We will perform a query which will count the number of tweet a user has posted since the program started. We can achieve it by leveraging the aggregate query feature.
+
+Let's look at how we can build it step-by-step. Get a `QueryBuilder` object for composing the query.
+
+```java
+QueryBuilder qb = graknGraph.graql();
+```
+
+First we need to select all `tweet` entities we have stored along with the `user` who posted it. Pay attention to how we also supply the `tweeted` relation as part of the condition.
+
+```java
+qb.match(
+  var("user").isa("user"),
+  var("tweet").isa("tweet"),
+  var().rel("writes", "user").rel("written_by", "tweet").isa("tweeted"))
+```
+
+This query itself will return everything we have stored preserving the relation between the tweet and the user. We will use this result as the basis of our aggregation. Let's perform an aggregate, grouped by `user`. We supply `count()` which will return the number of occurences.
+
+```java
+qb.match(
+  var("user").isa("user"),
+  var("tweet").isa("tweet"),
+  var().rel("writes", "user").rel("written_by", "tweet").isa("tweeted")
+).aggregate(group("user", count()));
+```
+
+ The query will return the result as an object of type `Map<Concept, Long>`. To be able to conveniently iterate over the result, I will transform it such that the end result will be stored as a `Stream<Map.Entry<String, Long>>`, i.e., a stream of pairs of username and tweet count.
+
+```java
+  // execute query
+  Map<Concept, Long> result = ((Map<Concept, Long>) q.execute());
+
+  // map Map<Concept, Long> into Stream<Map.Entry<String, Long>> before returning
+  ResourceType screenNameResourceType = graknGraph.getResourceType("screen_name");
+
+  Stream<Map.Entry<String, Long>> mapped = result.entrySet().stream().map(entry -> {
+    Concept key = entry.getKey();
+    Long value = entry.getValue();
+    String screenName = (String) key.asEntity().resources(screenNameResourceType).iterator().next().getValue();
+    return new HashMap.SimpleImmutableEntry<>(screenName, value);
+  });
+```
+
+Voila! Here's how `calculateTweetCountPerUser` will look like.
 
 ```java
 public static Stream<Map.Entry<String, Long>> calculateTweetCountPerUser(GraknGraph graknGraph) {
@@ -425,10 +471,8 @@ public static Stream<Map.Entry<String, Long>> calculateTweetCountPerUser(GraknGr
 }
 ```
 
-## Putting It All Together
-
-
-
 ## Running The Application
+
+We're all set! 
 
 ## Conclusion
