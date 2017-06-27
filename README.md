@@ -394,19 +394,21 @@ public static void main(String[] args) {
 
 ```
 
-## Performing Simple Queries
+## Crafting And Performing Simple Queries
 
-### Building The Query
+We will perform a query which will count the number of tweet a user has posted since the program started. It can be achieved it by utilizing the aggregate query feature.
 
-We will perform a query which will count the number of tweet a user has posted since the program started. We can achieve it by leveraging the aggregate query feature.
-
-Let's look at how we can build it step-by-step. Get a `QueryBuilder` object for composing the query.
+Let's look at how we can build it step-by-step, start by creating a `QueryBuilder` object for composing the query.
 
 ```java
 QueryBuilder qb = graknGraph.graql();
 ```
 
-First we need to select all `tweet` entities we have stored along with the `user` who posted it. Pay attention to how we also supply the `tweeted` relation as part of the condition.
+Now let's begin crafting the query. For this tutorial, let's create a `match` query where we retrieve both the `user` and `tweet`.
+
+We will bind them into `var`s which will be named... `user` and `tweet`, respectively. Notice how we deliberately assign the `var`s  identical names as the respective entity types. This is not a necessity and in practice, you are free to name them anything you want.
+
+Also, pay attention to how we also supply the `tweeted` relation as part of the condition.
 
 ```java
 qb.match(
