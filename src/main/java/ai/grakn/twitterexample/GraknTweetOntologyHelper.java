@@ -20,35 +20,35 @@ import static ai.grakn.graql.Graql.var;
 
 public class GraknTweetOntologyHelper {
   public static void initTweetOntology(GraknGraph graknGraph) {
-    // resources
-    ResourceType idType = graknGraph.putResourceType("identifier", ResourceType.DataType.STRING);
-    ResourceType textType = graknGraph.putResourceType("text", ResourceType.DataType.STRING);
-    ResourceType screenNameType = graknGraph.putResourceType("screen_name", ResourceType.DataType.STRING);
+// resources
+ResourceType idType = graknGraph.putResourceType("identifier", ResourceType.DataType.STRING);
+ResourceType textType = graknGraph.putResourceType("text", ResourceType.DataType.STRING);
+ResourceType screenNameType = graknGraph.putResourceType("screen_name", ResourceType.DataType.STRING);
 
-    // entities
-    EntityType tweetType = graknGraph.putEntityType("tweet");
-    EntityType userType = graknGraph.putEntityType("user");
+// entities
+EntityType tweetType = graknGraph.putEntityType("tweet");
+EntityType userType = graknGraph.putEntityType("user");
 
-    // roles
-    RoleType writesType = graknGraph.putRoleType("writes");
-    RoleType writtenByType = graknGraph.putRoleType("written_by");
+// roles
+RoleType writesType = graknGraph.putRoleType("writes");
+RoleType writtenByType = graknGraph.putRoleType("written_by");
 
-    // relations
-    RelationType tweetedType = graknGraph.putRelationType("tweeted").relates(writesType).relates(writtenByType);
+// relations
+RelationType tweetedType = graknGraph.putRelationType("tweeted").relates(writesType).relates(writtenByType);
 
-    // resource and relation assignments
-    tweetType.resource(idType);
-    tweetType.resource(textType);
-    userType.resource(screenNameType);
-    userType.plays(writesType);
-    tweetType.plays(writtenByType);
+// resource and relation assignments
+tweetType.resource(idType);
+tweetType.resource(textType);
+userType.resource(screenNameType);
+userType.plays(writesType);
+tweetType.plays(writtenByType);
   }
 
-  public static Relation insertUserTweet(GraknGraph graknGraph, String screenName, String tweet) {
-    Entity tweetEntity = insertTweet(graknGraph, tweet);
-    Entity userEntity = insertUserIfNotExist(graknGraph, screenName);
-    return insertTweetedRelation(graknGraph, userEntity, tweetEntity);
-  }
+public static Relation insertUserTweet(GraknGraph graknGraph, String screenName, String tweet) {
+  Entity tweetEntity = insertTweet(graknGraph, tweet);
+  Entity userEntity = insertUserIfNotExist(graknGraph, screenName);
+  return insertTweetedRelation(graknGraph, userEntity, tweetEntity);
+}
 
   public static Optional<Entity> findUser(QueryBuilder queryBuilder, String user) {
     MatchQuery findUser = queryBuilder.match(var("x").isa("user").has("screen_name", user)).limit(1);
@@ -121,9 +121,9 @@ public class GraknTweetOntologyHelper {
   }
 
   // TODO: properly handle exception
-  public static void withGraknGraph(GraknSession session, Consumer<GraknGraph> fn) {
-    GraknGraph graphWriter = session.open(GraknTxType.WRITE);
-    fn.accept(graphWriter);
-    graphWriter.commit();
-  }
+public static void withGraknGraph(GraknSession session, Consumer<GraknGraph> fn) {
+  GraknGraph graphWriter = session.open(GraknTxType.WRITE);
+  fn.accept(graphWriter);
+  graphWriter.commit();
+}
 }
