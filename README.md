@@ -123,7 +123,7 @@ Next we will define two **roles** - `writes` and `written_by` to express that a 
 
 The structure can be sumarrized by the following graph:
 
-![twitter-example](/Users/lolski/grakn.ai/twitterexample/image/twitter-example.jpg)
+![twitter-example](image/twitter-example.jpg)
 
 With that set, let's define a new method `initTweetOntology` inside `GraknTweetOntologyHelper` class and define our ontology creation there.
 
