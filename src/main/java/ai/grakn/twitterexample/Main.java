@@ -20,19 +20,19 @@ public class Main {
   private static final String graphImplementation = Grakn.IN_MEMORY;
   private static final String keyspace = "twitter-example";
 
-public static void main(String[] args) {
-  try (GraknSession session = Grakn.session(graphImplementation, keyspace)) {
-    withGraknGraph(session, graknGraph -> initTweetOntology(graknGraph)); // initialize ontology
+  public static void main(String[] args) {
+    try (GraknSession session = Grakn.session(graphImplementation, keyspace)) {
+      withGraknGraph(session, graknGraph -> initTweetOntology(graknGraph)); // initialize ontology
 
-    listenToTwitterStreamAsync(consumerKey, consumerSecret, accessToken, accessTokenSecret, (screenName, tweet) -> {
-      withGraknGraph(session, graknGraph -> {
-        insertUserTweet(graknGraph, screenName, tweet); // insert tweet
-        Stream<Map.Entry<String, Long>> result = calculateTweetCountPerUser(graknGraph); // query
-        prettyPrintQueryResult(result); // display
+      listenToTwitterStreamAsync(consumerKey, consumerSecret, accessToken, accessTokenSecret, (screenName, tweet) -> {
+        withGraknGraph(session, graknGraph -> {
+          insertUserTweet(graknGraph, screenName, tweet); // insert tweet
+          Stream<Map.Entry<String, Long>> result = calculateTweetCountPerUser(graknGraph); // query
+          prettyPrintQueryResult(result); // display
+        });
       });
-    });
+    }
   }
-}
 
   public static void prettyPrintQueryResult(Stream<Map.Entry<String, Long>> result) {
     System.out.println("------");
