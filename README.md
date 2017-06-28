@@ -475,12 +475,23 @@ public static Stream<Map.Entry<String, Long>> calculateTweetCountPerUser(GraknGr
 }
 ```
 
-
-
 ## Running The Application
 
-We're all set! 
+We're all set! Let's run the application with:
 
-The project can be downloaded at 
+```sh
+echo hello
+```
 
-Future improvements: batching, more sophisticated queries
+Watch the terminal as you see the following text printed everytime there's an incoming tweet:
+
+```
+------
+-- user knowl3dg3 tweeted 2 time(s).
+-- user gr4ph tweeted 1 time(s).
+-- user w1th tweeted 1 time(s).
+-- user gr4kn tweeted 1 time(s).
+------
+```
+
+Finally, we have shown you many useful concepts — from creating an ontology, storing data, crafting a GraQL query, as well as displaying the result of the query. These are fundamental concepts that you will likely use in almost every area.
