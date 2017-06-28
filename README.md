@@ -174,9 +174,7 @@ userType.plays(writesType);
 tweetType.plays(writtenByType);
 ```
 
-### Ontology Creation Wrap Up
-
-Now invoke the method in main function so the ontology is created every time we run the application.
+Now invoke the method in `main` so the ontology is created at the start of the application.
 
 ```java
 public static void main(String[] args) {
@@ -188,19 +186,65 @@ public static void main(String[] args) {
 
 ## Streaming Data From Twitter
 
-Now that we're done with ontology creation, let's develop the code which allows the application to listen to the public tweet stream.
+Now that we're done with ontology creation, let's develop the code for listening to the public tweet stream. 
 
-In order to achieve it, we will create our own class `TweetListener`, which implements Twitter4J's `StatusListener`. We must register a callback `onStatusReceived` during instantiation. It will be executed  every time we receive a new tweet.
-
-As we only care about receiving tweet updates and nothing else, we will only need to override a single method `onStatus`.
-
-Here's the full definition of `TweetListener`.
+Define a new method `listenToTwitterStreamAsync ` and put it in a class named `AsyncTweetStreamProcessorHelper `.  In addition to accepting Twitter credential settings, we will also need to supply a callback `onTweetReceived`, will be invoked whenever the application receives a new tweet. Further down, we will use this callback for storing, querying and displaying tweets as they come.
 
 ```java
-import twitter4j.*;
+public class AsyncTweetStreamProcessorHelper {
+  public static TwitterStream listenToTwitterStreamAsync(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret, BiConsumer<String, String> onTweetReceived) {
+    final String DEFAULT_LANGUAGE = "en";
+    ...
+  }
+}
+```
 
-import java.util.function.BiConsumer;
+The first thing we need to do here is to create a `Configuration` object out of the Twitter credential settings. Let's write a dedicated method just for that and name it `createTwitterConfiguration`. Afterwards, use that method to create the `Configuration` object which we will need in `listenToTwitterStreamAsync`.
 
+```java
+public class AsyncTweetStreamProcessorHelper {
+  public static TwitterStream listenToTwitterStreamAsync(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret, BiConsumer<String, String> onTweetReceived) {
+    final String DEFAULT_LANGUAGE = "en";
+    Configuration conf = createTwitterConfiguration(consumerKey, consumerSecret, accessToken, accessTokenSecret);
+    // ...
+  }
+  
+  private static Configuration createTwitterConfiguration(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret) {
+    return new ConfigurationBuilder()
+        .setDebugEnabled(false)
+        .setOAuthConsumerKey(consumerKey)
+        .setOAuthConsumerSecret(consumerSecret)
+        .setOAuthAccessToken(accessToken)
+        .setOAuthAccessTokenSecret(accessTokenSecret)
+        .build();
+  }
+}
+```
+
+Next we will create a private class `TweetListener` and make it implement the `StatusListener` interface from Twitter4J. This interface has a bunch of methods we can override depending on what we want to receive from Twitter. As we only care about receiving tweet updates and nothing else, we only need to override a single method `onStatus`.
+
+The constructor of our `TweetListener` class accepts a callback `onStatusReceived` which will be executed  every time we receive a new tweet.
+
+Once we're done defining the class let's comeback to `listenToTwitterStreamAsync` and instantiate it. We will also instantiate two other classes, `TwitterStreamFactory` and `TwitterStream`. Now we can start listening to Twitter by calling the `sample` method. We supplied `"en"` which means we are only interested for English tweets.
+
+```java
+public class AsyncTweetStreamProcessorHelper {
+  public static TwitterStream listenToTwitterStreamAsync(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret, BiConsumer<String, String> onTweetReceived) {
+    final String DEFAULT_LANGUAGE = "en";
+
+    Configuration conf = createTwitterConfiguration(consumerKey, consumerSecret, accessToken, accessTokenSecret);
+    TweetListener tweetListener = new TweetListener(onTweetReceived);
+
+    TwitterStreamFactory twitterStreamFactory = new TwitterStreamFactory(conf);
+    TwitterStream twitterStreamSingleton = twitterStreamFactory.getInstance();
+    twitterStreamSingleton.addListener(tweetListener);
+
+    twitterStreamSingleton.sample(DEFAULT_LANGUAGE);
+
+    return twitterStreamSingleton;
+  }
+
+// An implementation which implements twitter4j's StatusListener
 class TweetListener implements StatusListener {
   public TweetListener(BiConsumer<String, String> onStatusReceived) {
     this.onStatusReceived = onStatusReceived;
@@ -209,7 +253,6 @@ class TweetListener implements StatusListener {
   public void onStatus(Status status) {
     onStatusReceived.accept(status.getUser().getScreenName(), status.getText());
   }
-  
   public void onException(Exception ex) {
     ex.printStackTrace();
   }
@@ -224,49 +267,7 @@ class TweetListener implements StatusListener {
 }
 ```
 
-Next we will create a class `AsyncTweetStreamProcessorHelper`. ???
-
-```java
-public class AsyncTweetStreamProcessorHelper {
-}
-```
-
-Create a function which ???
-
-```java
-  private static Configuration createTwitterConfiguration(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret) {
-    return new ConfigurationBuilder()
-        .setDebugEnabled(false)
-        .setOAuthConsumerKey(consumerKey)
-        .setOAuthConsumerSecret(consumerSecret)
-        .setOAuthAccessToken(accessToken)
-        .setOAuthAccessTokenSecret(accessTokenSecret)
-        .build();
-  }
-```
-
-And finally 
-
-```java
-public static TwitterStream listenToTwitterStreamAsync(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret, BiConsumer<String, String> onTweetReceived) {
-    final String DEFAULT_LANGUAGE = "en";
-
-    Configuration conf = createTwitterConfiguration(consumerKey, consumerSecret, accessToken, accessTokenSecret);
-    TweetListener tweetListener = new TweetListener(onTweetReceived);
-
-    TwitterStreamFactory twitterStreamFactory = new TwitterStreamFactory(conf);
-    TwitterStream twitterStreamSingleton = twitterStreamFactory.getInstance();
-    twitterStreamSingleton.addListener(tweetListener);
-
-    twitterStreamSingleton.sample(DEFAULT_LANGUAGE);
-
-    return twitterStreamSingleton;
-  }
-```
-
-### Streaming Data Wrap Up
-
-Let's call it
+Let's wrap up this section by adding the call to `listenToTwitterStreamAsync` into `main`.
 
 ```java
 public static void main(String[] args) {
