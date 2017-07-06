@@ -560,7 +560,8 @@ public class Main {
 We're all set! The only thing left is to run the application. Let's do it right away.
 
 ```sh
-echo hello
+mvn package
+java -jar target/twitterexample-1.0-SNAPSHOT.jar
 ```
 
 Watch the terminal as the application runs. You should see the following text printed everytime there's an incoming tweet:
