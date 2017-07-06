@@ -12,26 +12,67 @@ As of today, you will need a valid credential in order to call practicaly every 
 You can register your own application in the [Twitter Application Management](https://apps.twitter.com/). Once you've done so you can  get the credentials by visiting the **Keys and Access Tokens** tab. The value we care about in particular are Consumer Key, Consumer Secret, Access Token, and Access Token Secret.
 
 ## Bootstraping The Skeleton Project
-Let's bootstrap a new maven project by running ??? on the command line:
+Let's bootstrap a new maven project! Hit the command line and run the following command to generate a new maven project:
 
 ```sh
-echo 'hello'
+mvn archetype:generate -DgroupId=ai.grakn -DartifactId=twitterexample -DarchetypeArtifactId=maven-archetype-quickstart -DinteractiveMode=false
 ```
 
-Now that you have basic project structure and `pom.xml`in place, let's start customising them to our needs. Let's add the following configuration in order to enable lambda and other nifty Java 8 features:
+Now that you have basic project structure and `pom.xml`in place, let's start customising them to our needs. We will add two things to the `<build>` section:
+
+1. `maven-compiler-plugin` configuration in order to enable lambda and other nifty Java 8 features
+2. `maven-shade-plugin` configuration which points to our `Main` class, for creating a fat JAR.
 
 ```xml
-<plugin>
-    <groupId>org.apache.maven.plugins</groupId>
-    <artifactId>maven-compiler-plugin</artifactId>
-    <configuration>
-        <source>1.8</source>
-        <target>1.8</target>
-    </configuration>
-</plugin>
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+                <source>1.8</source>
+                <target>1.8</target>
+            </configuration>
+        </plugin>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <version>2.3</version>
+            <configuration>
+                <createDependencyReducedPom>true</createDependencyReducedPom>
+                <filters>
+                    <filter>
+                        <artifact>*:*</artifact>
+                        <excludes>
+                            <exclude>META-INF/*.SF</exclude>
+                            <exclude>META-INF/*.DSA</exclude>
+                            <exclude>META-INF/*.RSA</exclude>
+                        </excludes>
+                    </filter>
+                </filters>
+            </configuration>
+            <executions>
+                <execution>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>shade</goal>
+                    </goals>
+                    <configuration>
+                        <transformers>
+                            <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                            <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                <mainClass>ai.grakn.twitterexample.Main</mainClass>
+                            </transformer>
+                        </transformers>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
 ```
 
-Then make sure you have all the required dependencies, i.e., `grakn-graph`, `grakn-graql`, `twitter4j-core`, and `twitter4j-stream`:
+Then continue to the `<dependencies>` section and make sure you have all the required dependencies, i.e., `grakn-graph`, `grakn-graql`, `twitter4j-core`, and `twitter4j-stream`:
 
 ```xml
 <dependencies>
