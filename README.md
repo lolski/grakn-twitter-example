@@ -1,5 +1,5 @@
 # Streaming Public Tweets
-In this tutorial we will look at how to stream public tweet into Grakn's knowledge graph. The tutorial aims to demonstrate key concepts such as receiving, inserting and querying data. Upon the completion of this tutorial, you will have learnt about these concepts:
+In this tutorial we will look at how to stream public tweets into Grakn's knowledge graph. The tutorial aims to demonstrate key concepts such as receiving, inserting and querying data. Upon the completion of this tutorial, you will have learnt about these concepts:
 
 - Defining a simple Grakn.ai ontology using the Java API
 - Streaming public tweets into the application with the [Twitter4J](http://twitter4j.org/ "Twitter4J") library
@@ -7,7 +7,7 @@ In this tutorial we will look at how to stream public tweet into Grakn's knowled
 - Performing simple queries using GraQL, the Grakn's Query Language
 
 ## Registering Your Own Twitter Application
-As of today, you will need a valid credential in order to call practicaly every endpoint in the Twitter API. Therefore, you must own a Twitter application (or, register a new one) before proceeding further.
+As of today, you will need a valid credential in order to call practically every endpoint in the Twitter API. Therefore, you must own a Twitter application (or, register a new one) before proceeding further.
 
 You can register your own application in the [Twitter Application Management](https://apps.twitter.com/). Once you've done so you can  get the credentials by visiting the **Keys and Access Tokens** tab. The value we care about in particular are Consumer Key, Consumer Secret, Access Token, and Access Token Secret.
 
@@ -18,7 +18,7 @@ Let's bootstrap a new maven project! Hit the command line and run the following 
 mvn archetype:generate -DgroupId=ai.grakn -DartifactId=twitterexample -DarchetypeArtifactId=maven-archetype-quickstart -DinteractiveMode=false
 ```
 
-Now that you have basic project structure and `pom.xml`in place, let's start customising them to our needs. We will add two things to the `<build>` section:
+Now that you have basic project structure and `pom.xml` in place, let's start customising them to our needs. We will add two things to the `<build>` section:
 
 1. `maven-compiler-plugin` configuration in order to enable lambda and other nifty Java 8 features
 2. `maven-shade-plugin` configuration which points to our `Main` class, for creating a fat JAR.
@@ -101,13 +101,13 @@ Then continue to the `<dependencies>` section and make sure you have all the req
 </dependencies>
 ```
 
-For reference purpose, you always look at the complete `pom.xml` definition [here](google.com).
+You can see the complete `pom.xml` definition [here](google.com).
 
 ## The Main Class
 
-Let's kick things up by defining a `Main` class inside the `ai.grakn.twitterexample` package. Aside from Twitter credentials, it contains a few important Grakn settings.
+Let's kick things off by defining a `Main` class inside the `ai.grakn.twitterexample` package. Aside from Twitter credentials, it contains a few important Grakn settings.
 
-First, we have decided to use an **in-memory graph** for simplicity's sake — working with an in-memory graph frees us from having to set up a Grakn distribution in the local machine. Second, the graph will be stored in a **keyspace** named `twitter-example`.
+First, we have decided to use an **in-memory graph** for simplicity's sake — working with an in-memory graph frees us from having to set up a Grakn distribution in the local machine. The in-memory graph is not for storing data and will be lost once the program finishes execution. Second, the graph will be stored in a **keyspace** named `twitter-example`.
 
 ```java
 package ai.grakn.twitterexample;
@@ -147,9 +147,10 @@ Following that, another equally important object for operating on the graph is `
 ```java
 public class GraknTweetOntologyHelper {
   public static void withGraknGraph(GraknSession session, Consumer<GraknGraph> fn) {
-    GraknGraph graphWriter = session.open(GraknTxType.WRITE);
-    fn.accept(graphWriter);
-    graphWriter.commit();
+    try (GraknGraph graphWriter = session.open(GraknTxType.WRITE)) {
+      fn.accept(graphWriter);
+      graphWriter.commit();
+    }
   }
 }
 ```
@@ -268,7 +269,7 @@ Next we will create a private class `TweetListener` and make it implement the `S
 
 The constructor of our `TweetListener` class accepts a callback `onStatusReceived` which will be executed  every time we receive a new tweet.
 
-Once we're done defining the class let's comeback to `listenToTwitterStreamAsync` and instantiate it. We will also instantiate two other classes, `TwitterStreamFactory` and `TwitterStream`. Now we can start listening to Twitter by calling the `sample` method. We supplied `"en"` which means we are only interested for English tweets.
+Once we're done defining the class let's come back to `listenToTwitterStreamAsync` and instantiate it. We will also instantiate two other classes, `TwitterStreamFactory` and `TwitterStream`. Now we can start listening to Twitter by calling the `sample` method. We supplied `"en"` which means we are only interested in English tweets.
 
 ```java
 public class AsyncTweetStreamProcessorHelper {
@@ -332,6 +333,8 @@ At this point our little program already has a clearly defined ontology, and is 
 2. Insert a user who posted the tweet, only once — we don't want to insert the same user twice
 3. Maintain an association between a tweet and the user
 
+We will be using the graph API for inserting the data in the graph because it is lightweight and efficient.
+
 ### Insert A Tweet
 
 To insert a tweet, we must create a `tweet` entity and a `text` resource to hold the tweet's textual data, before associating said resource with the entity.
@@ -354,7 +357,7 @@ public static Entity insertTweet(GraknGraph graknGraph, String tweet) {
 
 ### Insert A User
 
-In addition to the tweet, we also want to store who posted the tweet. A semantic we need to enforce is to insert a particular the user only once, i.e., it doesn't make sense to store the same user twice.
+In addition to the tweet, we also want to store who posted the tweet. A semantic we need to enforce is to insert a particular user only once, i.e., it doesn't make sense to store the same user twice.
 
 Therefore, let's add a method for checking whether we've previously stored a particular user. We will be using Java 8's `Optional<T>`, where we return the `Entity` object of that user only if it exists in the knowledge graph. Otherwise, an `Optional.empty()` will be returned.
 
@@ -423,7 +426,7 @@ public static Relation insertUserTweet(GraknGraph graknGraph, String screenName,
 }
 ```
 
-We're done with tweet insertion functionality! Next step: adding query to the stored data. Before we proceed, let's add the method we've just defined to the main method as shown below.
+We're done with tweet insertion functionality! Next step: querying the stored data. Before we proceed, let's add the method we've just defined to the main method as shown below.
 
 ```java
 public static void main(String[] args) {
@@ -440,7 +443,7 @@ public static void main(String[] args) {
 
 ## Crafting Simple Queries Using GraQL
 
-We will perform a query which will count the number of tweet a user has posted since the program started. It can be achieved it by utilizing the aggregate query feature.
+We will perform a query which will count the number of tweets a user has posted since the program started. It can be achieved it by utilizing the aggregate query feature. Graql has been chosen over the graph API for this task because it is declarative and therefore much easier to use for complex queries than the graph API.
 
 Let's look at how we can build it step-by-step, start by creating a `QueryBuilder` object which we will use to craft the query in GraQL.
 
