@@ -121,9 +121,10 @@ public static Relation insertUserTweet(GraknGraph graknGraph, String screenName,
   }
 
   // TODO: properly handle exception
-public static void withGraknGraph(GraknSession session, Consumer<GraknGraph> fn) {
-  GraknGraph graphWriter = session.open(GraknTxType.WRITE);
-  fn.accept(graphWriter);
-  graphWriter.commit();
-}
+  public static void withGraknGraph(GraknSession session, Consumer<GraknGraph> fn) {
+    try (GraknGraph graphWriter = session.open(GraknTxType.WRITE)) {
+      fn.accept(graphWriter);
+      graphWriter.commit();
+    }
+  }
 }
