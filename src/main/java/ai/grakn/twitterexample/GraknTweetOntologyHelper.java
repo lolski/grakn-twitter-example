@@ -7,8 +7,6 @@ import ai.grakn.concept.*;
 import ai.grakn.graql.AggregateQuery;
 import ai.grakn.graql.MatchQuery;
 import ai.grakn.graql.QueryBuilder;
-import ai.grakn.graql.admin.Answer;
-import ai.grakn.graql.analytics.CountQuery;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -34,7 +32,7 @@ public class GraknTweetOntologyHelper {
     RoleType postedByType = graknGraph.putRoleType("posted_by");
 
     // relations
-    RelationType tweetedType = graknGraph.putRelationType("tweeted").relates(postsType).relates(postedByType);
+    RelationType userTweetRelationType = graknGraph.putRelationType("user-tweet-relation").relates(postsType).relates(postedByType);
 
     // resource and relation assignments
     tweetType.resource(idType);
@@ -47,7 +45,7 @@ public class GraknTweetOntologyHelper {
 public static Relation insertUserTweet(GraknGraph graknGraph, String screenName, String tweet) {
   Entity tweetEntity = insertTweet(graknGraph, tweet);
   Entity userEntity = insertUserIfNotExist(graknGraph, screenName);
-  return insertTweetedRelation(graknGraph, userEntity, tweetEntity);
+  return insertUserTweetRelation(graknGraph, userEntity, tweetEntity);
 }
 
   public static Optional<Entity> findUser(QueryBuilder queryBuilder, String user) {
@@ -83,16 +81,16 @@ public static Relation insertUserTweet(GraknGraph graknGraph, String screenName,
     return tweetEntity.resource(tweetResource);
   }
 
-  public static Relation insertTweetedRelation(GraknGraph graknGraph, Entity user, Entity tweet) {
-    RelationType tweetedType = graknGraph.getRelationType("tweeted");
+  public static Relation insertUserTweetRelation(GraknGraph graknGraph, Entity user, Entity tweet) {
+    RelationType userTweetRelationType = graknGraph.getRelationType("user-tweet-relation");
     RoleType postsType = graknGraph.getRoleType("posts");
     RoleType postedByType = graknGraph.getRoleType("posted_by");
 
-    Relation tweetedRelation = tweetedType.addRelation()
+    Relation userTweetRelation = userTweetRelationType.addRelation()
         .addRolePlayer(postsType, user)
         .addRolePlayer(postedByType, tweet);
 
-    return tweetedRelation;
+    return userTweetRelation;
   }
 
   public static Stream<Map.Entry<String, Long>> calculateTweetCountPerUser(GraknGraph graknGraph) {
@@ -101,7 +99,7 @@ public static Relation insertUserTweet(GraknGraph graknGraph, String screenName,
     AggregateQuery q = qb.match(
         var("user").isa("user"),
         var("tweet").isa("tweet"),
-        var().rel("posts", "user").rel("posted_by", "tweet").isa("tweeted")
+        var().rel("posts", "user").rel("posted_by", "tweet").isa("user-tweet-relation")
         ).aggregate(group("user", count()));
 
     // execute query
