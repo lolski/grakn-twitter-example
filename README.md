@@ -1,4 +1,4 @@
-# Streaming Public Tweets
+# Using Grakn To Work With Tweet Data
 In this tutorial we will look at how to stream public tweets into Grakn's knowledge graph. The tutorial aims to demonstrate key concepts such as receiving, inserting and querying data. Upon the completion of this tutorial, you will have learnt about these concepts:
 
 - Defining a simple Grakn.ai ontology using the Java API
