@@ -30,18 +30,18 @@ public class GraknTweetOntologyHelper {
     EntityType userType = graknGraph.putEntityType("user");
 
     // roles
-    RoleType writesType = graknGraph.putRoleType("writes");
-    RoleType writtenByType = graknGraph.putRoleType("written_by");
+    RoleType postsType = graknGraph.putRoleType("posts");
+    RoleType postedByType = graknGraph.putRoleType("posted_by");
 
     // relations
-    RelationType tweetedType = graknGraph.putRelationType("tweeted").relates(writesType).relates(writtenByType);
+    RelationType tweetedType = graknGraph.putRelationType("tweeted").relates(postsType).relates(postedByType);
 
     // resource and relation assignments
     tweetType.resource(idType);
     tweetType.resource(textType);
     userType.resource(screenNameType);
-    userType.plays(writesType);
-    tweetType.plays(writtenByType);
+    userType.plays(postsType);
+    tweetType.plays(postedByType);
   }
 
 public static Relation insertUserTweet(GraknGraph graknGraph, String screenName, String tweet) {
@@ -85,12 +85,12 @@ public static Relation insertUserTweet(GraknGraph graknGraph, String screenName,
 
   public static Relation insertTweetedRelation(GraknGraph graknGraph, Entity user, Entity tweet) {
     RelationType tweetedType = graknGraph.getRelationType("tweeted");
-    RoleType writesType = graknGraph.getRoleType("writes");
-    RoleType writtenByType = graknGraph.getRoleType("written_by");
+    RoleType postsType = graknGraph.getRoleType("posts");
+    RoleType postedByType = graknGraph.getRoleType("posted_by");
 
     Relation tweetedRelation = tweetedType.addRelation()
-        .addRolePlayer(writesType, user)
-        .addRolePlayer(writtenByType, tweet);
+        .addRolePlayer(postsType, user)
+        .addRolePlayer(postedByType, tweet);
 
     return tweetedRelation;
   }
@@ -101,7 +101,7 @@ public static Relation insertUserTweet(GraknGraph graknGraph, String screenName,
     AggregateQuery q = qb.match(
         var("user").isa("user"),
         var("tweet").isa("tweet"),
-        var().rel("writes", "user").rel("written_by", "tweet").isa("tweeted")
+        var().rel("posts", "user").rel("posted_by", "tweet").isa("tweeted")
         ).aggregate(group("user", count()));
 
     // execute query
