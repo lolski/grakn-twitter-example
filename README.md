@@ -162,7 +162,7 @@ Let's define the ontology. As we are mainly interested in both the **tweet** and
 
 The `user` entity will hold the user's actual username in a **resource** called `screen_name`, while the `tweet` entity will contain the user's tweet in another resource called `text`. We will also define a resource `identifier` for the id.
 
-Next we will define two **roles** - `posts` and `posted_by` to express that a `user` posts a `tweet`, and similarly, a `tweet` is posted by a `user`. We will tie this two roles by a **relation** called `tweeted`.
+Next we will define two **roles** - `posts` and `posted_by` to express that a `user` posts a `tweet`, and similarly, a `tweet` is posted by a `user`. We will tie this two roles by a **relation** called `user-tweet-relation`.
 
 The structure can be sumarrized by the following graph:
 
@@ -203,7 +203,7 @@ RoleType postsType = graknGraph.putRoleType("posts");
 RoleType postedByType = graknGraph.putRoleType("posted_by");
 
 // relations
-RelationType tweetedType = graknGraph.putRelationType("tweeted").relates(postsType).relates(postedByType);
+RelationType userTweetRelationType = graknGraph.putRelationType("user-tweet-relation").relates(postsType).relates(postedByType);
 ```
 
 And finally, assign resources and roles appropriately.
@@ -400,16 +400,16 @@ We're almost there with a complete tweet insertion functionality! There's only o
 The following function will create a relation between the user and tweet that we specify.
 
 ```java
-public static Relation insertTweetedRelation(GraknGraph graknGraph, Entity user, Entity tweet) {
-  RelationType tweetedType = graknGraph.getRelationType("tweeted");
+public static Relation insertUserTweetRelation(GraknGraph graknGraph, Entity user, Entity tweet) {
+  RelationType userTweetRelationType = graknGraph.getRelationType("user-tweet-relation");
   RoleType postsType = graknGraph.getRoleType("posts");
   RoleType postedByType = graknGraph.getRoleType("posted_by");
 
-  Relation tweetedRelation = tweetedType.addRelation()
+  Relation userTweetRelation = userTweetRelationType.addRelation()
       .addRolePlayer(postsType, user)
       .addRolePlayer(postedByType, tweet);
 
-  return tweetedRelation;
+  return userTweetRelation;
 }
 ```
 
@@ -421,7 +421,7 @@ Finally, let's wrap up by defining a function of which the sole responsibility i
 public static Relation insertUserTweet(GraknGraph graknGraph, String screenName, String tweet) {
   Entity tweetEntity = insertTweet(graknGraph, tweet);
   Entity userEntity = insertUserIfNotExist(graknGraph, screenName);
-  return insertTweetedRelation(graknGraph, userEntity, tweetEntity);
+  return insertUserTweetRelation(graknGraph, userEntity, tweetEntity);
 }
 ```
 
@@ -454,13 +454,13 @@ Now let's begin crafting the query. For this tutorial, let's create a `match` qu
 
 We will bind them into `var`s which will be named... `user` and `tweet`, respectively. Notice how we deliberately assign the `var`s  identical names as the respective entity types. This is not a necessity and in practice, you are free to name them anything you want.
 
-Also, pay attention to how we also supply the `tweeted` relation as part of the condition.
+Also, pay attention to how we also supply the `user-tweet-relation` relation as part of the condition.
 
 ```java
 qb.match(
   var("user").isa("user"),
   var("tweet").isa("tweet"),
-  var().rel("posts", "user").rel("posted_by", "tweet").isa("tweeted"))
+  var().rel("posts", "user").rel("posted_by", "tweet").isa("user-tweet-relation"))
 ```
 
 The query we've just defined will return every user and tweet along with their relations. We will use it as the basis of the aggregate query. 
@@ -471,7 +471,7 @@ Let's do some aggregation over the result here. We will supply `"user"` and `cou
 qb.match(
   var("user").isa("user"),
   var("tweet").isa("tweet"),
-  var().rel("posts", "user").rel("posted_by", "tweet").isa("tweeted")
+  var().rel("posts", "user").rel("posted_by", "tweet").isa("user-tweet-relation")
 ).aggregate(group("user", count()));
 ```
 
@@ -501,7 +501,7 @@ public static Stream<Map.Entry<String, Long>> calculateTweetCountPerUser(GraknGr
   AggregateQuery q = qb.match(
       var("user").isa("user"),
       var("tweet").isa("tweet"),
-      var().rel("posts", "user").rel("posted_by", "tweet").isa("tweeted")
+      var().rel("posts", "user").rel("posted_by", "tweet").isa("user-tweet-relation")
       ).aggregate(group("user", count()));
 
   // execute query

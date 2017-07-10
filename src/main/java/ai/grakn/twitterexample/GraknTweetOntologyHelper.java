@@ -42,11 +42,11 @@ public class GraknTweetOntologyHelper {
     tweetType.plays(postedByType);
   }
 
-public static Relation insertUserTweet(GraknGraph graknGraph, String screenName, String tweet) {
-  Entity tweetEntity = insertTweet(graknGraph, tweet);
-  Entity userEntity = insertUserIfNotExist(graknGraph, screenName);
-  return insertUserTweetRelation(graknGraph, userEntity, tweetEntity);
-}
+  public static Relation insertUserTweet(GraknGraph graknGraph, String screenName, String tweet) {
+    Entity tweetEntity = insertTweet(graknGraph, tweet);
+    Entity userEntity = insertUserIfNotExist(graknGraph, screenName);
+    return insertUserTweetRelation(graknGraph, userEntity, tweetEntity);
+  }
 
   public static Optional<Entity> findUser(QueryBuilder queryBuilder, String user) {
     MatchQuery findUser = queryBuilder.match(var("x").isa("user").has("screen_name", user)).limit(1);
