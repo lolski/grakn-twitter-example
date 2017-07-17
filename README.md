@@ -1,13 +1,25 @@
-# Using Grakn To Work With Tweet Data
+---
+title: Working With Tweets
+keywords: analytics, social-media, streaming, twitter
+last_updated: July 2017
+tags: [analytics, social-media, streaming, twitter, examples]
+summary: "An example which demonstrates key Grakn concepts in a practical setting"
+sidebar: documentation_sidebar
+permalink: /documentation/examples/working-with-tweets.html
+folder: documentation
+comment_issue_id: 27
+---
+
+# Working With Tweets
 In this tutorial we will look at how to stream public tweets into Grakn's knowledge graph. The tutorial aims to demonstrate key concepts such as receiving, inserting and querying data. Upon the completion of this tutorial, you will have learnt about these concepts:
 
 - Defining a simple Grakn.ai ontology using the Java API
 - Streaming public tweets into the application with the [Twitter4J](http://twitter4j.org/ "Twitter4J") library
 - Inserting tweets into the knowledge graph using Grakn's Graph API
-- Performing simple queries using GraQL, the Grakn's Query Language
+- Performing simple queries using Graql, the Grakn's query language
 
 ## Registering Your Own Twitter Application
-As of today, you will need a valid credential in order to call practically every endpoint in the Twitter API. Therefore, you must own a Twitter application (or, register a new one) before proceeding further.
+As of today, every endpoint in the Twitter API is authenticated. Therefore, you must own a Twitter application (or, register a new one) before proceeding further.
 
 You can register your own application in the [Twitter Application Management](https://apps.twitter.com/). Once you've done so you can  get the credentials by visiting the **Keys and Access Tokens** tab. The value we care about in particular are Consumer Key, Consumer Secret, Access Token, and Access Token Secret.
 
@@ -72,31 +84,26 @@ Now that you have basic project structure and `pom.xml` in place, let's start cu
 </build>
 ```
 
-Then continue to the `<dependencies>` section and make sure you have all the required dependencies, i.e., `grakn-graph`, `grakn-graql`, `twitter4j-core`, and `twitter4j-stream`:
+Then continue to the `<dependencies>` section and make sure you have all the required dependencies, i.e., `grakn-graph`, `twitter4j-core`, and `twitter4j-stream`:
 
 ```xml
 <dependencies>
     <dependency>
         <groupId>ai.grakn</groupId>
         <artifactId>grakn-graph</artifactId>
-        <version>0.13.0</version>
-    </dependency>
-    <dependency>
-        <groupId>ai.grakn</groupId>
-        <artifactId>grakn-graql</artifactId>
-        <version>0.13.0</version>
+        <version><Current Grakn Version></version>
     </dependency>
 
     <dependency>
         <groupId>org.twitter4j</groupId>
         <artifactId>twitter4j-core</artifactId>
-        <version>4.0.6</version>
+        <version><Current Twitter4j Core Version></version>
     </dependency>
 
     <dependency>
         <groupId>org.twitter4j</groupId>
         <artifactId>twitter4j-stream</artifactId>
-        <version>4.0.6</version>
+        <version><Current Twitter4j Stream Version></version>
     </dependency>
 </dependencies>
 ```
@@ -158,15 +165,15 @@ We have decided to omit exception handling to keep the tutorial simple. In produ
 
 ## Defining The Ontology
 
-Let's define the ontology. As we are mainly interested in both the **tweet** and **who posted the tweet**, let us capture these concepts by defining two **entities**: `user` and `tweet`.
+Let's define the ontology. As we are mainly interested in both the **tweet** and **who posted the tweet**, let us capture these concepts by defining two **entity types**: `user` and `tweet`.
 
 The `user` entity will hold the user's actual username in a **resource** called `screen_name`, while the `tweet` entity will contain the user's tweet in another resource called `text`. We will also define a resource `identifier` for the id.
 
 Next we will define two **roles** - `posts` and `posted_by` to express that a `user` posts a `tweet`, and similarly, a `tweet` is posted by a `user`. We will tie this two roles by a **relation** called `user-tweet-relation`.
 
-The structure can be sumarrized by the following graph:
+The structure can be summarized by the following graph:
 
-![twitter-example](image/twitter-example.jpg)
+![Ontology](/images/working-with-tweets-ontology.jpg)
 
 With that set, let's define a new method `initTweetOntology` inside `GraknTweetOntologyHelper` class and define our ontology creation there.
 
@@ -229,7 +236,7 @@ public static void main(String[] args) {
 
 ## Streaming Data From Twitter
 
-Now that we're done with ontology creation, let's develop the code for listening to the public tweet stream. 
+Now that we're done with ontology creation, let's develop the code for listening to the public tweet stream.
 
 Define a new method `listenToTwitterStreamAsync ` and put it in a class named `AsyncTweetStreamProcessorHelper `.  In addition to accepting Twitter credential settings, we will also need to supply a callback `onTweetReceived`, will be invoked whenever the application receives a new tweet. Further down, we will use this callback for storing, querying and displaying tweets as they come.
 
@@ -251,7 +258,7 @@ public class AsyncTweetStreamProcessorHelper {
     Configuration conf = createTwitterConfiguration(consumerKey, consumerSecret, accessToken, accessTokenSecret);
     // ...
   }
-  
+
   private static Configuration createTwitterConfiguration(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret) {
     return new ConfigurationBuilder()
         .setDebugEnabled(false)
@@ -440,11 +447,11 @@ public static void main(String[] args) {
 
 ```
 
-## Crafting Simple Queries Using GraQL
+## Crafting Simple Queries Using Graql
 
-We will perform a query which will count the number of tweets a user has posted since the program started. It can be achieved it by utilizing the aggregate query feature. Graql has been chosen over the graph API for this task because it is declarative and therefore much easier to use for complex queries than the graph API.
+We will perform a query which will count the number of tweets a user has posted since the program started. It can be achieved by utilizing the aggregate query feature. Graql has been chosen over the graph API for this task because it is declarative and therefore much easier to use for complex queries.
 
-Let's look at how we can build it step-by-step, start by creating a `QueryBuilder` object which we will use to craft the query in GraQL.
+Let's look at how we can build it step-by-step, start by creating a `QueryBuilder` object which we will use to craft the query in Graql.
 
 ```java
 QueryBuilder qb = graknGraph.graql();
@@ -452,7 +459,7 @@ QueryBuilder qb = graknGraph.graql();
 
 Now let's begin crafting the query. For this tutorial, let's create a `match` query where we retrieve both the `user` and `tweet`.
 
-We will bind them into `var`s which will be named... `user` and `tweet`, respectively. Notice how we deliberately assign the `var`s  identical names as the respective entity types. This is not a necessity and in practice, you are free to name them anything you want.
+We will bind them into `var`s which will be named `user` and `tweet`, respectively. Notice how we deliberately assign the `var`s  identical names as the respective entity types. This is not a necessity and in practice, you are free to name them anything you want.
 
 Also, pay attention to how we also supply the `user-tweet-relation` relation as part of the condition.
 
@@ -463,7 +470,7 @@ qb.match(
   var().rel("posts", "user").rel("posted_by", "tweet").isa("user-tweet-relation"))
 ```
 
-The query we've just defined will return every user and tweet along with their relations. We will use it as the basis of the aggregate query. 
+The query we've just defined will return every user and tweet along with their relations. We will use it as the basis of the aggregate query.
 
 Let's do some aggregation over the result here. We will supply `"user"` and `count()` as the argument for `group()`, which essentially tells Grakn to group the result by username, and count the number of occurences per username.
 
@@ -538,7 +545,7 @@ public class Main {
   public static void main(String[] args) {
     try (GraknSession session = Grakn.session(graphImplementation, keyspace)) {
       withGraknGraph(session, graknGraph -> initTweetOntology(graknGraph)); // initialize ontology
-  
+
       listenToTwitterStreamAsync(consumerKey, consumerSecret, accessToken, accessTokenSecret, (screenName, tweet) -> {
         withGraknGraph(session, graknGraph -> {
           insertUserTweet(graknGraph, screenName, tweet); // insert tweet
@@ -577,4 +584,4 @@ Watch the terminal as the application runs. You should see the following text pr
 ------
 ```
 
-Finally, we have shown you many useful concepts — from creating an ontology, storing data, crafting a GraQL query, as well as displaying the result of the query. These are fundamental concepts that you will likely use in almost every area.
+Finally, we have shown you many useful concepts — from creating an ontology, storing data, crafting a Graql query, as well as displaying the result of the query. These are fundamental concepts that you will likely use in almost every area.
