@@ -2,6 +2,7 @@ package ai.grakn.twitterexample;
 
 import ai.grakn.Grakn;
 import ai.grakn.GraknSession;
+import ai.grakn.GraknTxType;
 
 import java.util.Map;
 import java.util.stream.Stream;
@@ -22,10 +23,10 @@ public class Main {
 
   public static void main(String[] args) {
     try (GraknSession session = Grakn.session(graphImplementation, keyspace)) {
-      withGraknGraph(session, graknGraph -> initTweetOntology(graknGraph)); // initialize ontology
+      withGraknGraph(session, GraknTxType.WRITE, graknGraph -> initTweetOntology(graknGraph)); // initialize ontology
 
       listenToTwitterStreamAsync(consumerKey, consumerSecret, accessToken, accessTokenSecret, (screenName, tweet) -> {
-        withGraknGraph(session, graknGraph -> {
+        withGraknGraph(session, GraknTxType.BATCH, graknGraph -> {
           insertUserTweet(graknGraph, screenName, tweet); // insert tweet
           Stream<Map.Entry<String, Long>> result = calculateTweetCountPerUser(graknGraph); // query
           prettyPrintQueryResult(result); // display

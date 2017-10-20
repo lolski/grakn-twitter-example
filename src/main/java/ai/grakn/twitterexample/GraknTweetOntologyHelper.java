@@ -119,8 +119,8 @@ public class GraknTweetOntologyHelper {
   }
 
   // TODO: properly handle exception
-  public static void withGraknGraph(GraknSession session, Consumer<GraknGraph> fn) {
-    GraknGraph graphWriter = session.open(GraknTxType.WRITE);
+  public static void withGraknGraph(GraknSession session, GraknTxType type, Consumer<GraknGraph> fn) {
+    GraknGraph graphWriter = session.open(type);
     fn.accept(graphWriter);
     graphWriter.commit();
   }
